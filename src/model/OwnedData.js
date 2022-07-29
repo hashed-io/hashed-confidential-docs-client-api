@@ -9,21 +9,10 @@ class OwnedData extends BaseConfidentialData {
    * @param {string} cid
    * @return {Object|null} with the following structure
    * {
-   *  "id": 69,
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
    *  "name": "name",
    *  "description": "desc",
-   *  "type": "json",
-   *  "owner_user": {
-   *    "id": "a917e2b7-596e-4bc0-be79-9828b0b3ea78",
-   *    "address": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
-   *  },
-   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "original_cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "iv": "d232f60b340d7235beafed405b08b811",
-   *  "mac": "6da9ce5375af9cdadf762e0910674c8b10b0c2c87500ce5c36fe0d2c8ea9fa5d",
-   *  "started_at": "2022-06-14T13:43:15.108+00:00",
-   *  "ended_at": null,
-   *  "is_deleted": false
+   *  "owner": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
    * }
    */
   async findByCID (cid) {
@@ -32,32 +21,18 @@ class OwnedData extends BaseConfidentialData {
 
   /**
    * @desc Gets an owned data record by cid, throws error if the record is not found or if
-   * the current parameter is true and the owned record is not the current version or if
-   * it has been soft deleted
+   * the user does not own the record
    *
    * @param {string} cid
-   * @param {boolean} current indicates whether the record must be the current version and not soft deleted
    * @return {Object} with the following structure
    * {
-   *  "id": 69,
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
    *  "name": "name",
    *  "description": "desc",
-   *  "type": "json",
-   *  "owner_user": {
-   *    "id": "a917e2b7-596e-4bc0-be79-9828b0b3ea78",
-   *    "address": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
-   *  },
-   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "original_cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "iv": "d232f60b340d7235beafed405b08b811",
-   *  "mac": "6da9ce5375af9cdadf762e0910674c8b10b0c2c87500ce5c36fe0d2c8ea9fa5d",
-   *  "started_at": "2022-06-14T13:43:15.108+00:00",
-   *  "ended_at": null,
-   *  "is_deleted": false
+   *  "owner": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
    * }
-   * @throws error if the record is not found or if the current parameter
-   * is true and the owned record is not the current version or if
-   * it has been soft deleted
+   * @throws error if the record is not found or if the user does not
+   * own the record
    */
   async getByCID ({
     cid
@@ -66,28 +41,18 @@ class OwnedData extends BaseConfidentialData {
   }
 
   /**
-   * @desc Inserts a new or updates and owned data record, if an id is specified and the cid
-   * is different a new verison of the record is inserted and returned
+   * @desc Adds a new owned document for the logged in user
    *
-   * @param {int} [id] of the owned data record to update
    * @param {string} name
    * @param {string} description
    * @param {Object|File} payload to be ciphered and stored
    * @return {Object} representing the owned data record with the following structure
    * {
-   *  "id": 69,
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
    *  "name": "name",
    *  "description": "desc",
-   *  "type": "json",
-   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "original_cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "iv": "d232f60b340d7235beafed405b08b811",
-   *  "mac": "6da9ce5375af9cdadf762e0910674c8b10b0c2c87500ce5c36fe0d2c8ea9fa5d",
-   *  "started_at": "2022-06-14T13:43:15.108+00:00",
-   *  "ended_at": null,
-   *  "is_deleted": false
+   *  "owner": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
    * }
-   * @throws error if the record is not found or if it is not the current version
    */
   async add ({
     name,
@@ -104,9 +69,9 @@ class OwnedData extends BaseConfidentialData {
   }
 
   /**
-   * @desc Updates metadata related to the owned data record with the specified id
+   * @desc Updates metadata related to the owned data record with the specified cid
    *
-   * @param {int} id of the owned data record to update
+   * @param {string} cid of the owned data record to update
    * @param {string} name
    * @param {string} description
    */
@@ -123,27 +88,16 @@ class OwnedData extends BaseConfidentialData {
   }
 
   /**
-   * @desc Returns the deciphered payload specfied by the cid
+   * @desc Returns the deciphered payload specified by the cid
    *
    * @param {string} cid related to the owned data record
    * @return {Object} representing the owned data record with the following structure
    * containing the deciphered payload
    * {
-   *  "id": 69,
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
    *  "name": "name",
    *  "description": "desc",
-   *  "type": "json",
-   *  "owner_user": {
-   *    "id": "a917e2b7-596e-4bc0-be79-9828b0b3ea78",
-   *    "address": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
-   *  },
-   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "original_cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
-   *  "iv": "d232f60b340d7235beafed405b08b811",
-   *  "mac": "6da9ce5375af9cdadf762e0910674c8b10b0c2c87500ce5c36fe0d2c8ea9fa5d",
-   *  "started_at": "2022-06-14T13:43:15.108+00:00",
-   *  "ended_at": null,
-   *  "is_deleted": false,
+   *  "owner": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua",
    *  "payload": { prop1: 1, prop2:"Hi"}
    * }
    * @throws error if the record is not found or if the logged in user is not the owner of the data

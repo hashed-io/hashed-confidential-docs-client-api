@@ -1,43 +1,45 @@
-**Hashed Private Client API**
+**Hashed Confidential Docs Client API**
 
-Enables the usage of the Hashed Private backend services by client applications.
+Enables the usage of the Hashed Confidential docs services by client applications.
 
 To install the hashed private client api run the following command:
 
-`npm i --save @smontero/hashed-private-client-api`
+`npm i --save @smontero/hashed-confidential-docs`
 
-Access to most of the functionality is done through the HashedPrivate object which enables its configuration and provides access to the dfferent API objects:
+Access to most of the functionality is done through the HashedConfidentailDocs object which enables its configuration and provides access to the dfferent API objects:
 
-`import { HashedPrivate } from '@smontero/hashed-private-client-api'`
+`import { HashedConfidentialDocs } from '@smontero/hashed-confidential-docs'`
 
 
 
-A new instance of the [HashedPrivate](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/HashedPrivate.js#L6) class has to be created passing in the 
-ipfs url, hashed private server endpoint and the sigining function:
+A new instance of the [HashedConfidentialDocs](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/HashedPrivate.js#L6) class has to be created passing in the 
+ipfs url, hashed chain endpoint, appName and a faucet instance:
 
 ```
-const hp = new HashedPrivate({
+const hcd = new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
-    privateURI: 'http://localhost:8080/v1/graphql',
-    signFn: async (address, message) => {
-      const { signature } = await nbvStorageApi.signMessage(message, address)
-      return signature
-    }
+    chainURI: 'ws://127.0.0.1:9944',
+    appName: 'Confidential Docs',
+    faucet
 })
 ```
 
-Then the user has to be logged in into the hashed private server:
+Then the user has to be logged in to hashed confidential docs:
 
-`await hp.login(address)`
+`await hcd.login({
+      ssoProvider: 'google',
+      ssoUserId: 'ssoUserId',
+      password: 'password'
+    })`
 
 Once logged in the services provided by the [OwnedData](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L98) and [SharedData](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L120) objects can be accessed.  
 
 **OwnedData services**
 
-* [upsert](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L175): Store a payload(object or File) in the hashed private service
+* [add](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L175): Store a payload(object or File) in the hashed private service
 
 ```
-const ownedData = await hp.ownedData().upsert({
+const ownedData = await hcd.ownedData().add({
     name: 'name1',
     description: 'desc1',
     payload: {
@@ -47,48 +49,31 @@ const ownedData = await hp.ownedData().upsert({
   })
 ```
 
-* [viewByID](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L205): View a stored payload by owned data id, returns the deciphered payload(object or File)
-
-```
-const ownedData = await hp.ownedData().viewByID({id})
-```
 
 * [viewByCID](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L199): View a stored payload by owned data cid, returns the deciphered payload(object or File)
 
 ```
-const ownedData = await hp.ownedData().viewByCID({id})
+const ownedData = await hcd.ownedData().viewByCID({cid})
 ```
 
 **SharedData services**
 
-* [shareExisting](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L221): Share the specified existing owned data record with another user
+* [share](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L221): Share the specified existing owned data record with another user
 
 ```
-let sharedData = await hp.sharedData().shareExisting({
-  toUserAddress,
-  originalOwnedDataId
+let sharedData = await hp.sharedData().share({
+  toUserAddress: '5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua',
+  name: 'name1',
+  description: 'desc1',
+  payload: {
+    prop1: 1,
+    prop2: 'str1'
+  }
 })
-```
-
-* [shareNew](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L189): Share new payload with another user, it first creates an owned data record for the user
-
-```
-let sharedData = await hp.sharedData().shareNew({
-  toUserAddress,
-  name,
-  description,
-  payload
-})
-```
-
-* [viewByID](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L294): View a stored payload by shared data id, returns the deciphered payload(object or File)
-
-```
-const ownedData = await hp.sharedData().viewByID({id})
 ```
 
 * [viewByCID](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L199): View a stored payload by shared data cid, returns the deciphered payload(object or File)
 
 ```
-const ownedData = await hp.sharedData().viewByCID({id})
+const ownedData = await hcd.sharedData().viewByCID({cid})
 ```
