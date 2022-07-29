@@ -12,7 +12,7 @@ Access to most of the functionality is done through the HashedConfidentailDocs o
 
 
 
-A new instance of the [HashedConfidentialDocs](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/HashedPrivate.js#L6) class has to be created passing in the 
+A new instance of the [HashedConfidentialDocs](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/HashedConfidentialDocs.js#L7) class has to be created passing in the 
 ipfs url, hashed chain endpoint, appName and a faucet instance:
 
 ```
@@ -32,11 +32,11 @@ Then the user has to be logged in to hashed confidential docs:
       password: 'password'
     })`
 
-Once logged in the services provided by the [OwnedData](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L98) and [SharedData](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L120) objects can be accessed.  
+Once logged in the services provided by the [OwnedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L5) and [SharedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L7) objects can be accessed.  
 
 **OwnedData services**
 
-* [add](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L175): Store a payload(object or File) in the hashed private service
+* [add](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L57): Store a payload(object or File) in the hashed private service
 
 ```
 const ownedData = await hcd.ownedData().add({
@@ -50,7 +50,7 @@ const ownedData = await hcd.ownedData().add({
 ```
 
 
-* [viewByCID](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L199): View a stored payload by owned data cid, returns the deciphered payload(object or File)
+* [viewByCID](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L105): View a stored payload by owned data cid, returns the deciphered payload(object or File)
 
 ```
 const ownedData = await hcd.ownedData().viewByCID({cid})
@@ -58,7 +58,7 @@ const ownedData = await hcd.ownedData().viewByCID({cid})
 
 **SharedData services**
 
-* [share](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/SharedData.js#L221): Share the specified existing owned data record with another user
+* [share](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L63): Share the specified existing owned data record with another user
 
 ```
 let sharedData = await hp.sharedData().share({
@@ -72,7 +72,7 @@ let sharedData = await hp.sharedData().share({
 })
 ```
 
-* [viewByCID](https://github.com/hashed-io/hashed-private-client-api/blob/5511ff36594bda72a17a4361524bd5dff66b52df/src/model/OwnedData.js#L199): View a stored payload by shared data cid, returns the deciphered payload(object or File)
+* [viewByCID](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L102): View a stored payload by shared data cid, returns the deciphered payload(object or File)
 
 ```
 const ownedData = await hcd.sharedData().viewByCID({cid})
