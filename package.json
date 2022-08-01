@@ -1,6 +1,6 @@
 {
   "name": "@smontero/hashed-confidential-docs",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Client API that handles in browser encryption and interacts with the hashed confidential docs pallet",
   "main": "dist/index.js",
   "scripts": {
