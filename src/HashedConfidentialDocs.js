@@ -59,6 +59,7 @@ class HashedConfidentialDocs {
 
   }) {
     await this._polkadot.connect()
+    await this.logout()
     await this._vault.unlock({
       signer,
       ssoProvider,
@@ -80,7 +81,9 @@ class HashedConfidentialDocs {
    * @throws error in case the logout fails
    */
   async logout () {
-    await this._vault.lock()
+    if (this.isLoggedIn()) {
+      await this._vault.lock()
+    }
     this._ownedData = null
     this._sharedData = null
   }
