@@ -1,9 +1,10 @@
 const HashedConfidentialDocs = require('./HashedConfidentialDocs')
-const BaseFaucet = require('./model/BaseFaucet')
-const LocalAccountFaucet = require('./model/LocalAccountFaucet')
+const { BalancesApi } = require('./service')
+const { BaseFaucet, LocalAccountFaucet } = require('./model')
 
 module.exports = {
   HashedConfidentialDocs,
   BaseFaucet,
-  LocalAccountFaucet
+  LocalAccountFaucet,
+  BalancesApi
 }
