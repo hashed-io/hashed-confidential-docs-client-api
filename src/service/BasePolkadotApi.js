@@ -26,6 +26,7 @@ class BasePolkadotApi {
     sudo = false
   }) {
     params = params || []
+    console.log('callTx: ', extrinsicName, signer, params)
     await this.polkadotApi.setWeb3Signer(signer)
     // console.log('callTx params', params)
     let unsub

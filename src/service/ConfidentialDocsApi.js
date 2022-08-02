@@ -14,6 +14,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
   }
 
   async setOwnedDoc ({ signer, ownedDoc }) {
+    console.log('set owned doc, signer: ', signer, ownedDoc)
     return this.callTx({
       extrinsicName: 'setOwnedDocument',
       signer,
