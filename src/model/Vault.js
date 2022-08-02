@@ -3,6 +3,7 @@ const { Keyring } = require('@polkadot/keyring')
 const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
 const { Crypto } = require('@smontero/hashed-crypto')
 const { PasswordGeneratedKeyCipher, SignatureGeneratedKeyCipher } = require('@smontero/generated-key-cipher-providers')
+const { Polkadot } = require('../service')
 // const { LocalStorageKey } = require('../const')
 
 class Vault extends EventEmitter {
@@ -299,11 +300,11 @@ class Vault extends EventEmitter {
 
   getAddress () {
     this.assertIsUnlocked()
-    return this._getAddress(this._signer)
+    return Polkadot.getAddress(this._signer)
   }
 
   _getAddress (signer) {
-    return signer.address || signer
+    return Polkadot.getAddress(signer)
   }
 
   _assertUserDetails ({

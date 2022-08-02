@@ -1,4 +1,5 @@
-// import { mnemonicGenerate } from '@polkadot/util-crypto'
+const Polkadot = require('./Polkadot')
+
 class BasePolkadotApi {
   /**
    * Class constructor
@@ -27,7 +28,11 @@ class BasePolkadotApi {
   }) {
     params = params || []
     console.log('callTx: ', extrinsicName, signer, params)
-    await this.polkadotApi.setWeb3Signer(signer)
+    let finalSigner = signer
+    if (!Polkadot.isKeyringPair(signer)) {
+      finalSigner = Polkadot.getAddress(signer)
+      await this.polkadotApi.setWeb3Signer(finalSigner)
+    }
     // console.log('callTx params', params)
     let unsub
     // eslint-disable-next-line no-async-promise-executor
@@ -38,7 +43,7 @@ class BasePolkadotApi {
         if (sudo) {
           call = tx.sudo.sudo(call)
         }
-        unsub = await call.signAndSend(signer, (e) => this.handlerTXResponse(e, resolve, reject, unsub))
+        unsub = await call.signAndSend(finalSigner, (e) => this.handlerTXResponse(e, resolve, reject, unsub))
       } catch (e) {
         reject(e)
       }

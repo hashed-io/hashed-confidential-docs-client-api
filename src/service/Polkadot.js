@@ -8,6 +8,14 @@ const {
 } = require('@polkadot/extension-dapp')
 
 class Polkadot {
+  static isKeyringPair (signer) {
+    return signer.sign && signer.lock
+  }
+
+  static getAddress (signer) {
+    return signer.address || signer
+  }
+
   constructor (wss, appName) {
     this._wss = wss
     this.appName = appName

@@ -1,4 +1,4 @@
-const { Keyring } = require('@polkadot/api')
+const { Keyring } = require('@polkadot/keyring')
 const { IPFS, Polkadot } = require('../../src/service')
 
 class Util {
