@@ -98,6 +98,98 @@ describe('Test confidential docs pallet', () => {
       expect(error.message).toContain('is not sharer nor the sharee of doc with cid:')
     }
   })
+
+  test('getOwnedCIDs and getOwnedDocs', async () => {
+    await setVault(signer1, 1)
+    let actualDocCIDs = await confidentialDocsApi.getOwnedCIDs(signer1.address)
+    expect(actualDocCIDs).toEqual([])
+    let actualDocs = await confidentialDocsApi.getOwnedDocs(signer1.address)
+    expect(actualDocs).toEqual([])
+    const doc1 = await setOwnedDoc(signer1, 1)
+    actualDocCIDs = await confidentialDocsApi.getOwnedCIDs(signer1.address)
+    expect(actualDocCIDs).toEqual([doc1.cid])
+    actualDocs = await confidentialDocsApi.getOwnedDocs(signer1.address)
+    expect(actualDocs).toEqual([doc1])
+    const doc2 = await setOwnedDoc(signer1, 2)
+    actualDocCIDs = await confidentialDocsApi.getOwnedCIDs(signer1.address)
+    expect(actualDocCIDs).toEqual([doc1.cid, doc2.cid])
+    actualDocs = await confidentialDocsApi.getOwnedDocs(signer1.address)
+    expect(actualDocs).toEqual([doc1, doc2])
+  })
+
+  test('getOwnedDocs subscription', async () => {
+    expect.assertions(3)
+    await setVault(signer1, 1)
+    let counter = 0
+    const doc1 = getOwnedDoc(signer1, 1)
+    const doc2 = getOwnedDoc(signer1, 2)
+    const unsub = await confidentialDocsApi.getOwnedDocs(signer1.address, (docs) => {
+      if (counter === 0) {
+        expect(docs).toEqual([])
+      } else if (counter === 1) {
+        expect(docs).toEqual([doc1])
+      } else if (counter === 2) {
+        expect(docs).toEqual([doc1, doc2])
+      }
+      counter++
+    })
+    await confidentialDocsApi.setOwnedDoc({
+      signer: signer1,
+      ownedDoc: doc1
+    })
+    await confidentialDocsApi.setOwnedDoc({
+      signer: signer1,
+      ownedDoc: doc2
+    })
+    await unsub()
+  })
+
+  test('getSharedWithMeCIDs and getSharedWithMeDocs', async () => {
+    await setVault(signer1, 1)
+    await setVault(signer2, 2)
+    let actualDocCIDs = await confidentialDocsApi.getSharedWithMeCIDs(signer2.address)
+    expect(actualDocCIDs).toEqual([])
+    let actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
+    expect(actualDocs).toEqual([])
+    const doc1 = await setSharedDoc(signer1, signer2, 1)
+    actualDocCIDs = await confidentialDocsApi.getSharedWithMeCIDs(signer2.address)
+    expect(actualDocCIDs).toEqual([doc1.cid])
+    actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
+    expect(actualDocs).toEqual([doc1])
+    const doc2 = await setSharedDoc(signer1, signer2, 2)
+    actualDocCIDs = await confidentialDocsApi.getSharedWithMeCIDs(signer2.address)
+    expect(actualDocCIDs).toEqual([doc1.cid, doc2.cid])
+    actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
+    expect(actualDocs).toEqual([doc1, doc2])
+  })
+
+  test('getSharedWithMeDocs subscription', async () => {
+    expect.assertions(3)
+    await setVault(signer1, 1)
+    await setVault(signer2, 2)
+    let counter = 0
+    const doc1 = getSharedDoc(signer1, signer2, 1)
+    const doc2 = getSharedDoc(signer1, signer2, 2)
+    const unsub = await confidentialDocsApi.getSharedWithMeDocs(signer2.address, (docs) => {
+      if (counter === 0) {
+        expect(docs).toEqual([])
+      } else if (counter === 1) {
+        expect(docs).toEqual([doc1])
+      } else if (counter === 2) {
+        expect(docs).toEqual([doc1, doc2])
+      }
+      counter++
+    })
+    await confidentialDocsApi.sharedDoc({
+      signer: signer1,
+      sharedDoc: doc1
+    })
+    await confidentialDocsApi.sharedDoc({
+      signer: signer1,
+      sharedDoc: doc2
+    })
+    await unsub()
+  })
 })
 
 function assertOwnedDoc (actual, expected) {
@@ -123,4 +215,41 @@ async function setVault (signer, id) {
     cid: `cid ${id}`
   }
   await confidentialDocsApi.setVault(vault)
+}
+
+function getOwnedDoc (signer, id) {
+  return {
+    name: `name ${id}`,
+    description: `desc ${id}`,
+    cid: `cid ${id}`,
+    owner: signer.address
+  }
+}
+
+function getSharedDoc (signerFrom, signerTo, id) {
+  return {
+    name: `name ${id}`,
+    description: `desc ${id}`,
+    cid: `cid ${id}`,
+    from: signerFrom.address,
+    to: signerTo.address
+  }
+}
+
+async function setOwnedDoc (signer, id) {
+  const ownedDoc = getOwnedDoc(signer, id)
+  await confidentialDocsApi.setOwnedDoc({
+    signer,
+    ownedDoc
+  })
+  return ownedDoc
+}
+
+async function setSharedDoc (signerFrom, signerTo, id) {
+  const sharedDoc = getSharedDoc(signerFrom, signerTo, id)
+  await confidentialDocsApi.sharedDoc({
+    signer: signerFrom,
+    sharedDoc
+  })
+  return sharedDoc
 }

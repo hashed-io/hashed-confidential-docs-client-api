@@ -92,7 +92,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     assertOwnedData(ownedData, expectedOwnedData)
     const { payload } = await hcd.ownedData().view(ownedData)
     expect(payload).toEqual(expectedOwnedData.payload)
-    ownedData = await hcd.ownedData().viewByCID(ownedData)
+    ownedData = await hcd.ownedData().viewByCID(ownedData.cid)
     assertOwnedData(ownedData, expectedOwnedData)
     expect(ownedData.payload).toEqual(expectedOwnedData.payload)
   })
@@ -105,9 +105,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     expected.description = 'desc 2'
     let actual = await hcd.ownedData().updateMetadata(expected)
     assertOwnedData(actual, expected)
-    actual = await hcd.ownedData().getByCID({
-      cid: expected.cid
-    })
+    actual = await hcd.ownedData().getByCID(expected.cid)
     assertOwnedData(actual, expected)
   })
 
@@ -142,9 +140,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     actual = await hcd.sharedData().view(expected)
     assertSharedData(actual, expected)
     expect(actual.payload).toEqual(expected.payload)
-    actual = await hcd.sharedData().viewByCID({
-      cid: expected.cid
-    })
+    actual = await hcd.sharedData().viewByCID(expected.cid)
     assertSharedData(actual, expected)
     expect(actual.payload).toEqual(expected.payload)
     await logout()
@@ -152,9 +148,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     actual = await hcd.sharedData().view(expected)
     assertSharedData(actual, expected)
     expect(actual.payload).toEqual(expected.payload)
-    actual = await hcd.sharedData().viewByCID({
-      cid: expected.cid
-    })
+    actual = await hcd.sharedData().viewByCID(expected.cid)
     assertSharedData(actual, expected)
     expect(actual.payload).toEqual(expected.payload)
   })
@@ -165,9 +159,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     await logout()
     await login(util.getSSOUserDetails(3))
     try {
-      await hcd.sharedData().viewByCID({
-        cid: actual.cid
-      })
+      await hcd.sharedData().viewByCID(actual.cid)
     } catch (err) {
       expect(err.message).toContain('is not sharer nor the sharee of doc with cid')
     }

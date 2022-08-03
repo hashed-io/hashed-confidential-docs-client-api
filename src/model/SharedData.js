@@ -43,6 +43,28 @@ class SharedData extends BaseConfidentialData {
   }
 
   /**
+   * @desc Gets the metadata of the documents shared with the user, if a subTrigger
+   * function is provided a subscription is made gets all the updates, in this case
+   * the function returns a function to unsubscribe, if no subTrigger function is provided
+   * then the function returns the current shared documents
+   *
+   * @param {string} address of the user the documents were shared with
+   * @param {function} [subTrigger] function that handles subscription updates
+   * @return {Array|function} returns array of shared documents if no subTrigger is provided,
+   * if it is provided a function to unsubscribe is returned
+   * [{
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
+   *  "name": "name",
+   *  "description": "desc",
+   *  "to": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua",
+   *  "from": "5FWtfhKTuGKm9yWqzApwTfiUL4UPWukJzEcCTGYDiYHsdKaG"
+   * }]
+   */
+  async getSharedWithMeDocs (address, subTrigger) {
+    return this._confidentialDocsApi.getSharedWithMeDocs(address, subTrigger)
+  }
+
+  /**
    * @desc Creates a new shared data record for the specified payload, the data is shared with the
    * user specified by the toUserAddress parameter
    *
@@ -99,9 +121,7 @@ class SharedData extends BaseConfidentialData {
    * }
    * @throws error if the record is not found or if the logged in user is not the sharer/sharee of the data
    */
-  async viewByCID ({
-    cid
-  }) {
+  async viewByCID (cid) {
     return this.view(await this.getByCID(cid))
   }
 

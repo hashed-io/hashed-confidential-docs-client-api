@@ -34,10 +34,29 @@ class OwnedData extends BaseConfidentialData {
    * @throws error if the record is not found or if the user does not
    * own the record
    */
-  async getByCID ({
-    cid
-  }) {
+  async getByCID (cid) {
     return this._api().getOwnedDoc(cid, this._address())
+  }
+
+  /**
+   * @desc Gets the metadata of the documents that the user owns, if a subTrigger
+   * function is provided a subscription is made gets all the updates, in this case
+   * the function returns a function to unsubscribe, if no subTrigger function is provided
+   * then the function returns the current owned documents
+   *
+   * @param {string} address of the owner
+   * @param {function} [subTrigger] function that handles subscription updates
+   * @return {Array|function} returns array of owned documents if no subTrigger is provided,
+   * if it is provided a function to unsubscribe is returned
+   * [{
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
+   *  "name": "name",
+   *  "description": "desc",
+   *  "owner": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua"
+   * }]
+   */
+  async getOwnedDocs (address, subTrigger) {
+    return this._confidentialDocsApi.getOwnedDocs(address, subTrigger)
   }
 
   /**
@@ -102,10 +121,8 @@ class OwnedData extends BaseConfidentialData {
    * }
    * @throws error if the record is not found or if the logged in user is not the owner of the data
    */
-  async viewByCID ({
-    cid
-  }) {
-    return this.view(await this.getByCID({ cid }))
+  async viewByCID (cid) {
+    return this.view(await this.getByCID(cid))
   }
 
   async view (ownedData) {

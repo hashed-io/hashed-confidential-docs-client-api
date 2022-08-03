@@ -53,7 +53,7 @@ const ownedData = await hcd.ownedData().add({
 * [viewByCID](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L105): View a stored payload by owned data cid, returns the deciphered payload(object or File)
 
 ```
-const ownedData = await hcd.ownedData().viewByCID({cid})
+const ownedData = await hcd.ownedData().viewByCID(cid)
 ```
 
 **SharedData services**
@@ -75,5 +75,5 @@ let sharedData = await hp.sharedData().share({
 * [viewByCID](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L102): View a stored payload by shared data cid, returns the deciphered payload(object or File)
 
 ```
-const ownedData = await hcd.sharedData().viewByCID({cid})
+const ownedData = await hcd.sharedData().viewByCID(cid)
 ```

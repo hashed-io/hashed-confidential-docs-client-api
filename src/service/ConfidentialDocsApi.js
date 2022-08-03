@@ -75,6 +75,27 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     return doc
   }
 
+  async getOwnedCIDs (address, subTrigger) {
+    const response = await this.exQuery('ownedDocsByOwner', [address], subTrigger)
+    return subTrigger ? response : response.toHuman()
+  }
+
+  async findOwnedDocsByCIDs (cids) {
+    cids = Array.isArray(cids) ? cids : [cids]
+    const response = await this.exMultiQuery('ownedDocs', cids)
+    return response.map(r => r.toHuman())
+  }
+
+  async getOwnedDocs (address, subTrigger) {
+    if (subTrigger) {
+      return this.getOwnedCIDs(address, async (cids) => {
+        subTrigger(await this.findOwnedDocsByCIDs(cids))
+      })
+    }
+    const cids = await this.getOwnedCIDs(address)
+    return this.findOwnedDocsByCIDs(cids)
+  }
+
   async findSharedDoc (cid, requestor) {
     const { value } = await this.exQuery('sharedDocs', [cid])
     const doc = value.toHuman()
@@ -92,6 +113,27 @@ class ConfidentialDocsApi extends BasePolkadotApi {
       throw new Error(`Shared doc: ${cid} does not exist`)
     }
     return doc
+  }
+
+  async getSharedWithMeCIDs (address, subTrigger) {
+    const response = await this.exQuery('sharedDocsByTo', [address], subTrigger)
+    return subTrigger ? response : response.toHuman()
+  }
+
+  async findSharedWithMeDocsByCIDs (cids) {
+    cids = Array.isArray(cids) ? cids : [cids]
+    const response = await this.exMultiQuery('sharedDocs', cids)
+    return response.map(r => r.toHuman())
+  }
+
+  async getSharedWithMeDocs (address, subTrigger) {
+    if (subTrigger) {
+      return this.getSharedWithMeCIDs(address, async (cids) => {
+        subTrigger(await this.findSharedWithMeDocsByCIDs(cids))
+      })
+    }
+    const cids = await this.getSharedWithMeCIDs(address)
+    return this.findSharedWithMeDocsByCIDs(cids)
   }
 
   async killStorage (signer) {
