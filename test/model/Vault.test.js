@@ -17,7 +17,7 @@ const util = new Util()
 beforeAll(async () => {
   polkadot = await util.setupPolkadot()
   confidentialDocsApi = new ConfidentialDocsApi(polkadot, () => {})
-  const balancesApi = new BalancesApi(polkadot, () => {})
+  const balancesApi = new BalancesApi(polkadot._api, () => {})
   const faucet = new LocalAccountFaucet({
     balancesApi,
     signer: util.getKeypair('//Alice'),

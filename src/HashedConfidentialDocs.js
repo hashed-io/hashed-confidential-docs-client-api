@@ -27,7 +27,7 @@ class HashedConfidentialDocs {
     this._ipfs = new IPFS({
       url: ipfsURL
     })
-    this._polkadot = new Polkadot(chainURI, appName)
+    this._polkadot = new Polkadot({ wss: chainURI, appName })
     this._confidentialDocsApi = new ConfidentialDocsApi(this._polkadot, () => {})
     this._vault = new Vault({
       confidentialDocsApi: this._confidentialDocsApi,

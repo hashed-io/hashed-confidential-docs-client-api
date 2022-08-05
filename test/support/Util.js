@@ -17,7 +17,7 @@ class Util {
   }
 
   async setupPolkadot () {
-    const polkadot = new Polkadot('ws://127.0.0.1:9944', 'Confidential Docs')
+    const polkadot = new Polkadot({ wss: 'ws://127.0.0.1:9944', appName: 'Confidential Docs' })
     await polkadot.connect()
     polkadot.setWeb3Signer = async function () {}
     polkadot.signMessage = async (message, signer) => {

@@ -16,10 +16,10 @@ class Polkadot {
     return signer.address || signer
   }
 
-  constructor (wss, appName) {
+  constructor ({ wss = null, appName, api = null }) {
     this._wss = wss
     this.appName = appName
-    this._api = null
+    this._api = api
   }
 
   /**

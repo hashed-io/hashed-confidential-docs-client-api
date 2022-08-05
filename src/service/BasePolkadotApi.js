@@ -7,6 +7,9 @@ class BasePolkadotApi {
    * @param {String} palletName Pallet Name
    */
   constructor (polkadotApi, palletName, notify) {
+    if (!(polkadotApi instanceof Polkadot)) {
+      polkadotApi = new Polkadot({ api: polkadotApi })
+    }
     this.polkadotApi = polkadotApi
     this.palletName = palletName
     this.notify = notify
