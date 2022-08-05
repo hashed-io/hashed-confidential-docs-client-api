@@ -57,7 +57,6 @@ class Vault extends EventEmitter {
     if (password) {
       password = `${password}@${userIdBase}`
     }
-    console.log('password: ', password)
     const cipher = this._getCipher({
       signer,
       password
