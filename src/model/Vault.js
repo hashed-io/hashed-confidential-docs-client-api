@@ -49,14 +49,15 @@ class Vault extends EventEmitter {
     if (this.isUnlocked()) {
       this.lock()
     }
-    const userId = this._generateUserId({
+    const { userIdBase, userId } = this._generateUserId({
       signer,
       ssoProvider,
       ssoUserId
     })
     if (password) {
-      password = `${password}@${userId}`
+      password = `${password}@${userIdBase}`
     }
+    console.log('password: ', password)
     const cipher = this._getCipher({
       signer,
       password
@@ -103,11 +104,12 @@ class Vault extends EventEmitter {
       ssoProvider,
       ssoUserId
     })
-    return this._hasVault(this._generateUserId({
+    const { userId } = this._generateUserId({
       signer,
       ssoProvider,
       ssoUserId
-    }))
+    })
+    return this._hasVault(userId)
   }
 
   lock () {
@@ -298,7 +300,11 @@ class Vault extends EventEmitter {
       prefix = 'native'
       suffix = this.getAddress(signer)
     }
-    return blake2AsHex(`${prefix}-${suffix}`)
+    const userIdBase = `${prefix}-${suffix}`
+    return {
+      userIdBase,
+      userId: blake2AsHex(userIdBase)
+    }
   }
 
   getAddress () {
