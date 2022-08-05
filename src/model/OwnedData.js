@@ -88,6 +88,16 @@ class OwnedData extends BaseConfidentialData {
   }
 
   /**
+   * @desc Removes the specified owned document for the logged in user
+   *
+   * @param {string} cid of the document to remove
+   * @return {Object} tx response from polkadot api
+   */
+  async remove (cid) {
+    return this._confidentialDocsApi.removeOwnedDoc({ cid, signer: this._signer() })
+  }
+
+  /**
    * @desc Updates metadata related to the owned data record with the specified cid
    *
    * @param {string} cid of the owned data record to update

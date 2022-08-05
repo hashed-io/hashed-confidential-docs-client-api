@@ -70,6 +70,17 @@ describe('Test confidential docs pallet', () => {
       expect(error.message).toContain('is not owner of doc with cid:')
     }
   })
+
+  test('removeOwnedDoc works', async () => {
+    await setVault(signer1, 1)
+    const ownedDoc = await setOwnedDoc(signer1, 1)
+    let actualOwnedDoc = await confidentialDocsApi.getOwnedDoc(ownedDoc.cid)
+    assertOwnedDoc(actualOwnedDoc, ownedDoc)
+    await confidentialDocsApi.removeOwnedDoc({ cid: ownedDoc.cid, signer: signer1 })
+    actualOwnedDoc = await confidentialDocsApi.findOwnedDoc(ownedDoc.cid)
+    expect(actualOwnedDoc).toBeNull()
+  })
+
   test('shareDoc works', async () => {
     expect.assertions(16)
     await setVault(signer1, 1)
@@ -97,6 +108,35 @@ describe('Test confidential docs pallet', () => {
     } catch (error) {
       expect(error.message).toContain('is not sharer nor the sharee of doc with cid:')
     }
+  })
+
+  test('update shared document metadata works', async () => {
+    await setVault(signer1, 1)
+    await setVault(signer2, 2)
+    const sharedDoc = await setSharedDoc(signer1, signer2, 1)
+    let actualSharedDoc = await confidentialDocsApi.getSharedDoc(sharedDoc.cid)
+    assertSharedDoc(actualSharedDoc, sharedDoc)
+    const updatedSharedDoc = {
+      cid: sharedDoc.cid,
+      name: 'updated name',
+      description: 'updated description'
+    }
+    actualSharedDoc = await confidentialDocsApi.updateSharedDocMetadata({ sharedDoc: updatedSharedDoc, signer: signer2 })
+    actualSharedDoc = await confidentialDocsApi.getSharedDoc(sharedDoc.cid)
+    updatedSharedDoc.from = sharedDoc.from
+    updatedSharedDoc.to = sharedDoc.to
+    assertSharedDoc(actualSharedDoc, updatedSharedDoc)
+  })
+
+  test('remove shared document works', async () => {
+    await setVault(signer1, 1)
+    await setVault(signer2, 2)
+    const sharedDoc = await setSharedDoc(signer1, signer2, 1)
+    let actualSharedDoc = await confidentialDocsApi.getSharedDoc(sharedDoc.cid)
+    assertSharedDoc(actualSharedDoc, sharedDoc)
+    actualSharedDoc = await confidentialDocsApi.removeSharedDoc({ cid: sharedDoc.cid, signer: signer2 })
+    actualSharedDoc = await confidentialDocsApi.findSharedDoc(sharedDoc.cid)
+    expect(actualSharedDoc).toBeNull()
   })
 
   test('getOwnedCIDs and getOwnedDocs', async () => {
@@ -144,41 +184,96 @@ describe('Test confidential docs pallet', () => {
     await unsub()
   })
 
-  test('getSharedWithMeCIDs and getSharedWithMeDocs', async () => {
+  test('getSharedCIDs, getSharedDocs, getSharedWithMeCIDs, getSharedWithMeDocs', async () => {
     await setVault(signer1, 1)
     await setVault(signer2, 2)
     let actualDocCIDs = await confidentialDocsApi.getSharedWithMeCIDs(signer2.address)
     expect(actualDocCIDs).toEqual([])
     let actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
     expect(actualDocs).toEqual([])
+    actualDocCIDs = await confidentialDocsApi.getSharedCIDs(signer1.address)
+    expect(actualDocCIDs).toEqual([])
+    actualDocs = await confidentialDocsApi.getSharedDocs(signer1.address)
+    expect(actualDocs).toEqual([])
+
     const doc1 = await setSharedDoc(signer1, signer2, 1)
     actualDocCIDs = await confidentialDocsApi.getSharedWithMeCIDs(signer2.address)
     expect(actualDocCIDs).toEqual([doc1.cid])
     actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
     expect(actualDocs).toEqual([doc1])
+    actualDocCIDs = await confidentialDocsApi.getSharedCIDs(signer1.address)
+    expect(actualDocCIDs).toEqual([doc1.cid])
+    actualDocs = await confidentialDocsApi.getSharedDocs(signer1.address)
+    expect(actualDocs).toEqual([doc1])
+
     const doc2 = await setSharedDoc(signer1, signer2, 2)
     actualDocCIDs = await confidentialDocsApi.getSharedWithMeCIDs(signer2.address)
     expect(actualDocCIDs).toEqual([doc1.cid, doc2.cid])
     actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
     expect(actualDocs).toEqual([doc1, doc2])
+    actualDocCIDs = await confidentialDocsApi.getSharedCIDs(signer1.address)
+    expect(actualDocCIDs).toEqual([doc1.cid, doc2.cid])
+    actualDocs = await confidentialDocsApi.getSharedDocs(signer1.address)
+    expect(actualDocs).toEqual([doc1, doc2])
+
+    const doc3 = await setSharedDoc(signer2, signer1, 3)
+    actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer2.address)
+    expect(actualDocs).toEqual([doc1, doc2])
+    actualDocs = await confidentialDocsApi.getSharedWithMeDocs(signer1.address)
+    expect(actualDocs).toEqual([doc3])
+    actualDocs = await confidentialDocsApi.getSharedDocs(signer1.address)
+    expect(actualDocs).toEqual([doc1, doc2])
+    actualDocs = await confidentialDocsApi.getSharedDocs(signer2.address)
+    expect(actualDocs).toEqual([doc3])
   })
 
-  test('getSharedWithMeDocs subscription', async () => {
-    expect.assertions(3)
+  test('getSharedWithMeDocs, getSharedDocs subscription', async () => {
+    expect.assertions(10)
     await setVault(signer1, 1)
     await setVault(signer2, 2)
-    let counter = 0
+    let counter1 = 0
+    let counter2 = 0
+    let counter3 = 0
+    let counter4 = 0
     const doc1 = getSharedDoc(signer1, signer2, 1)
     const doc2 = getSharedDoc(signer1, signer2, 2)
-    const unsub = await confidentialDocsApi.getSharedWithMeDocs(signer2.address, (docs) => {
-      if (counter === 0) {
+    const doc3 = getSharedDoc(signer2, signer1, 3)
+    const unsub1 = await confidentialDocsApi.getSharedWithMeDocs(signer2.address, (docs) => {
+      if (counter1 === 0) {
         expect(docs).toEqual([])
-      } else if (counter === 1) {
+      } else if (counter1 === 1) {
         expect(docs).toEqual([doc1])
-      } else if (counter === 2) {
+      } else if (counter1 === 2) {
         expect(docs).toEqual([doc1, doc2])
       }
-      counter++
+      counter1++
+    })
+    const unsub2 = await confidentialDocsApi.getSharedWithMeDocs(signer1.address, (docs) => {
+      if (counter2 === 0) {
+        expect(docs).toEqual([])
+      } else if (counter2 === 1) {
+        expect(docs).toEqual([doc3])
+      }
+      counter2++
+    })
+    const unsub3 = await confidentialDocsApi.getSharedDocs(signer1.address, (docs) => {
+      if (counter3 === 0) {
+        expect(docs).toEqual([])
+      } else if (counter3 === 1) {
+        expect(docs).toEqual([doc1])
+      } else if (counter3 === 2) {
+        expect(docs).toEqual([doc1, doc2])
+      }
+      counter3++
+    })
+
+    const unsub4 = await confidentialDocsApi.getSharedDocs(signer2.address, (docs) => {
+      if (counter4 === 0) {
+        expect(docs).toEqual([])
+      } else if (counter4 === 1) {
+        expect(docs).toEqual([doc3])
+      }
+      counter4++
     })
     await confidentialDocsApi.sharedDoc({
       signer: signer1,
@@ -188,7 +283,14 @@ describe('Test confidential docs pallet', () => {
       signer: signer1,
       sharedDoc: doc2
     })
-    await unsub()
+    await confidentialDocsApi.sharedDoc({
+      signer: signer2,
+      sharedDoc: doc3
+    })
+    await unsub1()
+    await unsub2()
+    await unsub3()
+    await unsub4()
   })
 })
 

@@ -14,11 +14,18 @@ class ConfidentialDocsApi extends BasePolkadotApi {
   }
 
   async setOwnedDoc ({ signer, ownedDoc }) {
-    console.log('set owned doc, signer: ', signer, ownedDoc)
     return this.callTx({
       extrinsicName: 'setOwnedDocument',
       signer,
       params: [ownedDoc]
+    })
+  }
+
+  async removeOwnedDoc ({ signer, cid }) {
+    return this.callTx({
+      extrinsicName: 'removeOwnedDocument',
+      signer,
+      params: [cid]
     })
   }
 
@@ -27,6 +34,22 @@ class ConfidentialDocsApi extends BasePolkadotApi {
       extrinsicName: 'shareDocument',
       signer,
       params: [sharedDoc]
+    })
+  }
+
+  async updateSharedDocMetadata ({ signer, sharedDoc }) {
+    return this.callTx({
+      extrinsicName: 'updateSharedDocumentMetadata',
+      signer,
+      params: [sharedDoc]
+    })
+  }
+
+  async removeSharedDoc ({ signer, cid }) {
+    return this.callTx({
+      extrinsicName: 'removeSharedDocument',
+      signer,
+      params: [cid]
     })
   }
 
@@ -120,7 +143,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     return subTrigger ? response : response.toHuman()
   }
 
-  async findSharedWithMeDocsByCIDs (cids) {
+  async findSharedDocsByCIDs (cids) {
     cids = Array.isArray(cids) ? cids : [cids]
     const response = await this.exMultiQuery('sharedDocs', cids)
     return response.map(r => r.toHuman())
@@ -129,11 +152,26 @@ class ConfidentialDocsApi extends BasePolkadotApi {
   async getSharedWithMeDocs (address, subTrigger) {
     if (subTrigger) {
       return this.getSharedWithMeCIDs(address, async (cids) => {
-        subTrigger(await this.findSharedWithMeDocsByCIDs(cids))
+        subTrigger(await this.findSharedDocsByCIDs(cids))
       })
     }
     const cids = await this.getSharedWithMeCIDs(address)
-    return this.findSharedWithMeDocsByCIDs(cids)
+    return this.findSharedDocsByCIDs(cids)
+  }
+
+  async getSharedCIDs (address, subTrigger) {
+    const response = await this.exQuery('sharedDocsByFrom', [address], subTrigger)
+    return subTrigger ? response : response.toHuman()
+  }
+
+  async getSharedDocs (address, subTrigger) {
+    if (subTrigger) {
+      return this.getSharedCIDs(address, async (cids) => {
+        subTrigger(await this.findSharedDocsByCIDs(cids))
+      })
+    }
+    const cids = await this.getSharedCIDs(address)
+    return this.findSharedDocsByCIDs(cids)
   }
 
   async killStorage (signer) {

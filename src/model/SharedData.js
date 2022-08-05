@@ -43,6 +43,28 @@ class SharedData extends BaseConfidentialData {
   }
 
   /**
+   * @desc Gets the metadata of the documents that the user has shared, if a subTrigger
+   * function is provided a subscription is made gets all the updates, in this case
+   * the function returns a function to unsubscribe, if no subTrigger function is provided
+   * then the function returns the current shared documents
+   *
+   * @param {string} address of the user who shared the documents
+   * @param {function} [subTrigger] function that handles subscription updates
+   * @return {Array|function} returns array of shared documents if no subTrigger is provided,
+   * if it is provided a function to unsubscribe is returned
+   * [{
+   *  "cid": "QmeHEb5TF4zkP2H6Mg5TcrvDs5egPCJgWFBB7YZaLmK7jr",
+   *  "name": "name",
+   *  "description": "desc",
+   *  "to": "5FSuxe2q7qCYKie8yqmM56U4ovD1YtBb3DoPzGKjwZ98vxua",
+   *  "from": "5FWtfhKTuGKm9yWqzApwTfiUL4UPWukJzEcCTGYDiYHsdKaG"
+   * }]
+   */
+  async getSharedDocs (address, subTrigger) {
+    return this._confidentialDocsApi.getSharedDocs(address, subTrigger)
+  }
+
+  /**
    * @desc Gets the metadata of the documents shared with the user, if a subTrigger
    * function is provided a subscription is made gets all the updates, in this case
    * the function returns a function to unsubscribe, if no subTrigger function is provided
@@ -103,6 +125,41 @@ class SharedData extends BaseConfidentialData {
       signer: this._signer()
     })
     return sharedDoc
+  }
+
+  /**
+   * @desc Updates the metadata of the specified shared document, only the user
+   * with whom the file was shared can update it
+   *
+   * @param {string} cid of the document to update
+   * @param {string} name
+   * @param {string} description
+   * @return {Object} tx response from polkadot api
+   */
+  async updateMetadata ({
+    cid,
+    name,
+    description
+  }) {
+    return this._confidentialDocsApi.updateSharedDocMetadata({
+      sharedDoc: {
+        cid,
+        name,
+        description
+      },
+      signer: this._signer()
+    })
+  }
+
+  /**
+   * @desc Removes the specified shared document for the logged in user, only the user
+   * with whom the file was shared can delete it
+   *
+   * @param {string} cid of the document to remove
+   * @return {Object} tx response from polkadot api
+   */
+  async remove (cid) {
+    return this._confidentialDocsApi.removeSharedDoc({ cid, signer: this._signer() })
   }
 
   /**
