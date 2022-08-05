@@ -54,6 +54,9 @@ class Vault extends EventEmitter {
       ssoProvider,
       ssoUserId
     })
+    if (password) {
+      password = `${password}@${userId}`
+    }
     const cipher = this._getCipher({
       signer,
       password
