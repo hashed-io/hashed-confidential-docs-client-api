@@ -2,7 +2,7 @@ const { EventEmitter } = require('events')
 const { Keyring } = require('@polkadot/keyring')
 const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
 const { Crypto } = require('@smontero/hashed-crypto')
-const { PasswordGeneratedKeyCipher, SignatureGeneratedKeyCipher } = require('@smontero/generated-key-cipher-providers')
+const { PasswordGeneratedKeyCipher, PrivateKeyCipher, SignatureGeneratedKeyCipher } = require('@smontero/generated-key-cipher-providers')
 const { Polkadot } = require('../service')
 // const { LocalStorageKey } = require('../const')
 
@@ -43,10 +43,7 @@ class Vault extends EventEmitter {
     password = null
 
   }) {
-    if (this.isUnlocked()) {
-      this.lock()
-    }
-
+    this.lock()
     const {
       vault,
       signer: sgnr
@@ -70,11 +67,7 @@ class Vault extends EventEmitter {
   }
 
   /**
-   * Unlocks the user vault and retrieves the users secret data,
-   * if the user has logged in using a polkadot wallet the signer must be provided,
-   * if the user has logged in using single sign on the ssoProvider, ssoUserId and password must be provided
-   * if a vault does not exist a vault is created
-   * @param {Keyring} [signer] the substrate account related signer
+   * Exports the private key used to cipher the vault
    * @param {String} [ssoProvider] the single sign on user id required if using sso
    * @param {String} [ssoUserId] the single sign on user id required if using sso
    * @param {String} [password] the password used to generate the vault cipher key required when
@@ -86,6 +79,10 @@ class Vault extends EventEmitter {
     password
 
   }) {
+    await this.assertHasVault({
+      ssoProvider,
+      ssoUserId
+    })
     const {
       cipher
     } = await _getVault({
@@ -95,6 +92,38 @@ class Vault extends EventEmitter {
       password
     })
     await this._keyExporter.export(cipher.privateKey())
+  }
+
+  async updatePassword ({
+    ssoProvider,
+    ssoUserId,
+    newPassword,
+    oldPassword
+  }) {
+    // eslint-disable-next-line eqeqeq
+    if (oldPassword == newPassword) {
+      throw new Error('new password should be different from old')
+    }
+    await this._updatePassword({
+      ssoProvider,
+      ssoUserId,
+      newPassword,
+      oldPassword
+    })
+  }
+
+  async recoverVault ({
+    ssoProvider,
+    ssoUserId,
+    newPassword,
+    privateKey
+  }) {
+    await this._updatePassword({
+      ssoProvider,
+      ssoUserId,
+      newPassword,
+      privateKey
+    })
   }
 
   /**
@@ -127,6 +156,9 @@ class Vault extends EventEmitter {
   }
 
   lock () {
+    if (!this.isUnlocked()) {
+      return
+    }
     // this._vault = null
     this._signer = null
     this._docCipher = null
@@ -141,6 +173,20 @@ class Vault extends EventEmitter {
   assertIsUnlocked () {
     if (!this.isUnlocked()) {
       throw new Error('The vault is locked')
+    }
+  }
+
+  async assertHasVault ({
+    signer = null,
+    ssoProvider = null,
+    ssoUserId = null
+  }) {
+    if (!await this.hasVault({
+      signer,
+      ssoProvider,
+      ssoUserId
+    })) {
+      throw new Error('The user does not have a vault')
     }
   }
 
@@ -160,27 +206,79 @@ class Vault extends EventEmitter {
       privateKey,
       publicKey
     }
-    console.log('publicKey: ', publicKey)
+    // console.log('publicKey: ', publicKey)
     if (!signer) {
       vault.mnemonic = _generateMnemonic()
       signer = _createKeyPair(vault.mnemonic)
       // TODO: Need a faucet to provide balance to the account so that it can call extrinsics
     }
     await this._faucet.send(_getAddress(signer))
-    const { rawPayload, type } = await this._crypto.getRawPayload(vault)
-    const cipheredVault = await cipher.cipher({ payload: rawPayload, type })
-    console.log('cipheredVault1: ', cipheredVault)
+    await this._storeVault({
+      userId,
+      vault,
+      cipher,
+      signer
+    })
+    return {
+      vault,
+      signer
+    }
+  }
+
+  async _storeVault ({ userId, vault, cipher, signer }) {
+    const cipheredVault = await cipher.cipher({ payload: vault })
+    // console.log('cipheredVault1: ', cipheredVault)
+    // console.log('signer: ', _getAddress(signer))
     const cid = await this._ipfs.add(cipheredVault)
     await this._confidentialDocsApi.setVault({
       signer,
       userId,
-      publicKey,
+      publicKey: vault.publicKey,
       cid
     })
     return {
       vault,
       signer
     }
+  }
+
+  async _updatePassword ({
+    ssoProvider,
+    ssoUserId,
+    newPassword,
+    oldPassword = null,
+    privateKey = null
+
+  }) {
+    await this.assertHasVault({
+      ssoProvider,
+      ssoUserId
+    })
+    this.lock()
+    const {
+      vault,
+      userIdBase,
+      userId
+    } = await _getVault({
+      _this: this,
+      ssoProvider,
+      ssoUserId,
+      password: oldPassword,
+      privateKey
+    })
+    const cipher = _getCipher({
+      password: _generatePassword({
+        password: newPassword,
+        userIdBase
+      })
+    })
+    const signer = _createKeyPair(vault.mnemonic)
+    await this._storeVault({
+      userId,
+      vault,
+      cipher,
+      signer
+    })
   }
 
   _createDocCipher ({
@@ -252,7 +350,7 @@ class Vault extends EventEmitter {
 
   async _decipherVault (vaultDetails, cipher, signer = null) {
     const fullCipheredPayload = await this._ipfs.cat(vaultDetails.cid)
-    console.log('cipheredVault', fullCipheredPayload)
+    // console.log('cipheredVault', fullCipheredPayload)
     const vault = await cipher.decipher({ fullCipheredPayload })
     if (!signer) {
       signer = _createKeyPair(vault.mnemonic)
@@ -322,17 +420,26 @@ function _generateUserId ({
 
 function _getCipher ({
   signer = null,
-  password = null
+  password = null,
+  privateKey = null
 }) {
-  return signer
-    ? new SignatureGeneratedKeyCipher({
+  if (signer) {
+    return new SignatureGeneratedKeyCipher({
       signFn: async (address, message) => {
       },
       address: _getAddress(signer)
     })
-    : new PasswordGeneratedKeyCipher({
+  }
+  if (password) {
+    return new PasswordGeneratedKeyCipher({
       password
     })
+  }
+  if (privateKey) {
+    return new PrivateKeyCipher({
+      privateKey
+    })
+  }
 }
 
 function _createKeyPair (mnemonic) {
@@ -358,7 +465,8 @@ async function _getVault ({
   signer = null,
   ssoProvider = null,
   ssoUserId = null,
-  password = null
+  password = null,
+  privateKey = null
 
 }) {
   _assertUserDetails({
@@ -379,7 +487,8 @@ async function _getVault ({
   }
   const cipher = _getCipher({
     signer,
-    password
+    password,
+    privateKey
   })
   const vaultDetails = await _this._findVault(userId)
 
@@ -391,6 +500,8 @@ async function _getVault ({
     : await _this._createVault(userId, cipher, signer)
 
   return {
+    userIdBase,
+    userId,
     cipher,
     vault,
     signer: sgnr

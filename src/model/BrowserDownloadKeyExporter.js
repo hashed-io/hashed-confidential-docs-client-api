@@ -1,4 +1,5 @@
-class BrowserDownloadKeyExporter {
+const BaseKeyExporter = require('./BaseKeyExporter')
+class BrowserDownloadKeyExporter extends BaseKeyExporter {
   async export (key) {
     const file = new File([key], `private-key-${Date.now()}.txt`, {
       type: 'text/plain'

@@ -11,7 +11,7 @@ class LocalAccountFaucet {
   }
 
   async send (address) {
-    console.log(`Sending amount: ${this._amount} to address: ${address}`)
+    // console.log(`Sending amount: ${this._amount} to address: ${address}`)
     return this._balancesApi.transfer({
       signer: this._signer,
       dest: address,

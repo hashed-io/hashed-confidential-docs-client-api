@@ -22,8 +22,8 @@ class Util {
     polkadot.setWeb3Signer = async function () {}
     polkadot.signMessage = async (message, signer) => {
       const keyPair = signer.address ? signer : this.keyring.getPair(signer)
-      console.log('keyPair message: ', message)
-      console.log('keyPair address: ', keyPair.address)
+      // console.log('keyPair message: ', message)
+      // console.log('keyPair address: ', keyPair.address)
       return keyPair.sign(message)
     }
     return polkadot
