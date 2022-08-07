@@ -1,4 +1,4 @@
-const { OwnedData, SharedData, Vault } = require('./model')
+const { BrowserDownloadKeyExporter, OwnedData, SharedData, Vault } = require('./model')
 const { ConfidentialDocsApi, IPFS, Polkadot } = require('./service')
 
 /**
@@ -32,7 +32,8 @@ class HashedConfidentialDocs {
     this._vault = new Vault({
       confidentialDocsApi: this._confidentialDocsApi,
       ipfs: this._ipfs,
-      faucet
+      faucet,
+      keyExporter: new BrowserDownloadKeyExporter()
     })
 
     this._ownedData = null

@@ -6,18 +6,20 @@ const { PasswordGeneratedKeyCipher, SignatureGeneratedKeyCipher } = require('@sm
 const { Polkadot } = require('../service')
 // const { LocalStorageKey } = require('../const')
 
+const _keyring = new Keyring()
 class Vault extends EventEmitter {
   constructor ({
     confidentialDocsApi,
+    ipfs,
     faucet,
-    ipfs
+    keyExporter
   }) {
     super()
     this._confidentialDocsApi = confidentialDocsApi
-    this._faucet = faucet
     this._ipfs = ipfs
+    this._faucet = faucet
+    this._keyExporter = keyExporter
     this._crypto = new Crypto()
-    this._keyring = new Keyring()
     this._vault = null
     this._signer = null
     this._docCipher = null
@@ -41,35 +43,20 @@ class Vault extends EventEmitter {
     password = null
 
   }) {
-    this._assertUserDetails({
-      signer,
-      ssoProvider,
-      ssoUserId
-    })
     if (this.isUnlocked()) {
       this.lock()
     }
-    const { userIdBase, userId } = this._generateUserId({
-      signer,
-      ssoProvider,
-      ssoUserId
-    })
-    if (password) {
-      password = `${password}@${userIdBase}`
-    }
-    const cipher = this._getCipher({
-      signer,
-      password
-    })
-    const vaultDetails = await this._findVault(userId)
 
     const {
       vault,
       signer: sgnr
-    } = vaultDetails
-      ? await this._decipherVault(vaultDetails, cipher, signer)
-      : await this._createVault(userId, cipher, signer)
-
+    } = await _getVault({
+      _this: this,
+      signer,
+      ssoProvider,
+      ssoUserId,
+      password
+    })
     // this._vault = vault
     // console.log('vault: ', vault)
     this._signer = sgnr
@@ -80,6 +67,34 @@ class Vault extends EventEmitter {
         sgnr.lock()
       })
     }
+  }
+
+  /**
+   * Unlocks the user vault and retrieves the users secret data,
+   * if the user has logged in using a polkadot wallet the signer must be provided,
+   * if the user has logged in using single sign on the ssoProvider, ssoUserId and password must be provided
+   * if a vault does not exist a vault is created
+   * @param {Keyring} [signer] the substrate account related signer
+   * @param {String} [ssoProvider] the single sign on user id required if using sso
+   * @param {String} [ssoUserId] the single sign on user id required if using sso
+   * @param {String} [password] the password used to generate the vault cipher key required when
+   * using single sign on
+   */
+  async exportVaultKey ({
+    ssoProvider,
+    ssoUserId,
+    password
+
+  }) {
+    const {
+      cipher
+    } = await _getVault({
+      _this: this,
+      ssoProvider,
+      ssoUserId,
+      password
+    })
+    await this._keyExporter.export(cipher.privateKey())
   }
 
   /**
@@ -98,12 +113,12 @@ class Vault extends EventEmitter {
     ssoProvider = null,
     ssoUserId = null
   }) {
-    this._assertUserDetails({
+    _assertUserDetails({
       signer,
       ssoProvider,
       ssoUserId
     })
-    const { userId } = this._generateUserId({
+    const { userId } = _generateUserId({
       signer,
       ssoProvider,
       ssoUserId
@@ -147,11 +162,11 @@ class Vault extends EventEmitter {
     }
     console.log('publicKey: ', publicKey)
     if (!signer) {
-      vault.mnemonic = this._generateMnemonic()
-      signer = this._createKeyPair(vault.mnemonic)
+      vault.mnemonic = _generateMnemonic()
+      signer = _createKeyPair(vault.mnemonic)
       // TODO: Need a faucet to provide balance to the account so that it can call extrinsics
     }
-    await this._faucet.send(this._getAddress(signer))
+    await this._faucet.send(_getAddress(signer))
     const { rawPayload, type } = await this._crypto.getRawPayload(vault)
     const cipheredVault = await cipher.cipher({ payload: rawPayload, type })
     console.log('cipheredVault1: ', cipheredVault)
@@ -235,49 +250,17 @@ class Vault extends EventEmitter {
     }
   }
 
-  _generateMnemonic () {
-    return mnemonicGenerate()
-  }
-
   async _decipherVault (vaultDetails, cipher, signer = null) {
     const fullCipheredPayload = await this._ipfs.cat(vaultDetails.cid)
     console.log('cipheredVault', fullCipheredPayload)
     const vault = await cipher.decipher({ fullCipheredPayload })
     if (!signer) {
-      signer = this._createKeyPair(vault.mnemonic)
+      signer = _createKeyPair(vault.mnemonic)
     }
     return {
       vault,
       signer
     }
-  }
-
-  _createKeyPair (mnemonic) {
-    return this._keyring.addFromUri(mnemonic, {}, 'sr25519')
-  }
-
-  _getCipher ({
-    signer = null,
-    password = null
-  }) {
-    return signer
-      ? new SignatureGeneratedKeyCipher({
-        signFn: async (address, message) => {
-          console.log('address', address)
-          console.log('message', message)
-          let signature = await this._confidentialDocsApi.signMessage(message, address)
-          console.log('signature1: ', signature)
-          signature = await this._confidentialDocsApi.signMessage(message, address)
-          console.log('signature2: ', signature)
-          signature = await this._confidentialDocsApi.signMessage(message, address)
-          console.log('signature3: ', signature)
-          return signature
-        },
-        address: this.getAddress(signer)
-      })
-      : new PasswordGeneratedKeyCipher({
-        password
-      })
   }
 
   async _hasVault (userId) {
@@ -288,41 +271,9 @@ class Vault extends EventEmitter {
     return this._confidentialDocsApi.findVault(userId)
   }
 
-  _generateUserId ({
-    signer = null,
-    ssoProvider = null,
-    ssoUserId = null
-  }) {
-    let prefix = ssoProvider
-    let suffix = ssoUserId
-    if (signer) {
-      prefix = 'native'
-      suffix = this.getAddress(signer)
-    }
-    const userIdBase = `${prefix}-${suffix}`
-    return {
-      userIdBase,
-      userId: blake2AsHex(userIdBase)
-    }
-  }
-
   getAddress () {
     this.assertIsUnlocked()
-    return Polkadot.getAddress(this._signer)
-  }
-
-  _getAddress (signer) {
-    return Polkadot.getAddress(signer)
-  }
-
-  _assertUserDetails ({
-    signer,
-    ssoProvider,
-    ssoUserId
-  }) {
-    if (signer == null && (ssoProvider == null || ssoUserId == null)) {
-      throw new Error('if signer is not provided, ssoProvider and ssoUserId must be provided')
-    }
+    return _getAddress(this._signer)
   }
 
   // _getContext () {
@@ -339,3 +290,109 @@ class Vault extends EventEmitter {
 }
 
 module.exports = Vault
+
+function _getAddress (signer) {
+  return Polkadot.getAddress(signer)
+}
+
+function _generatePassword ({
+  password,
+  userIdBase
+}) {
+  return `${password}@${userIdBase}`
+}
+
+function _generateUserId ({
+  signer = null,
+  ssoProvider = null,
+  ssoUserId = null
+}) {
+  let prefix = ssoProvider
+  let suffix = ssoUserId
+  if (signer) {
+    prefix = 'native'
+    suffix = _getAddress(signer)
+  }
+  const userIdBase = `${prefix}-${suffix}`
+  return {
+    userIdBase,
+    userId: blake2AsHex(userIdBase)
+  }
+}
+
+function _getCipher ({
+  signer = null,
+  password = null
+}) {
+  return signer
+    ? new SignatureGeneratedKeyCipher({
+      signFn: async (address, message) => {
+      },
+      address: _getAddress(signer)
+    })
+    : new PasswordGeneratedKeyCipher({
+      password
+    })
+}
+
+function _createKeyPair (mnemonic) {
+  return _keyring.addFromUri(mnemonic, {}, 'sr25519')
+}
+
+function _generateMnemonic () {
+  return mnemonicGenerate()
+}
+
+function _assertUserDetails ({
+  signer,
+  ssoProvider,
+  ssoUserId
+}) {
+  if (signer == null && (ssoProvider == null || ssoUserId == null)) {
+    throw new Error('if signer is not provided, ssoProvider and ssoUserId must be provided')
+  }
+}
+
+async function _getVault ({
+  _this,
+  signer = null,
+  ssoProvider = null,
+  ssoUserId = null,
+  password = null
+
+}) {
+  _assertUserDetails({
+    signer,
+    ssoProvider,
+    ssoUserId
+  })
+  const { userIdBase, userId } = _generateUserId({
+    signer,
+    ssoProvider,
+    ssoUserId
+  })
+  if (password) {
+    password = _generatePassword({
+      password,
+      userIdBase
+    })
+  }
+  const cipher = _getCipher({
+    signer,
+    password
+  })
+  const vaultDetails = await _this._findVault(userId)
+
+  const {
+    vault,
+    signer: sgnr
+  } = vaultDetails
+    ? await _this._decipherVault(vaultDetails, cipher, signer)
+    : await _this._createVault(userId, cipher, signer)
+
+  return {
+    cipher,
+    vault,
+    signer: sgnr
+  }
+}
