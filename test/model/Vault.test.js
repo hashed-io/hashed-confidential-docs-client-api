@@ -147,9 +147,16 @@ describe('sign/verify', () => {
     const userDetails = util.getSSOUserDetails(1)
     await vault.unlock(userDetails)
     expect(vault.isUnlocked()).toBe(true)
-    const payload = 'message to sign'
-    const signature = await polkadot.sign({ payload })
-    const result = polkadot.verifySignature({
+    let payload = 'message to sign'
+    let signature = await polkadot.sign({ payload })
+    let result = polkadot.verifySignature({
+      payload,
+      signature
+    })
+    expect(result.isValid).toBe(true)
+    payload = { s1: 'message to sign', i1: 1 }
+    signature = await polkadot.sign({ payload })
+    result = polkadot.verifySignature({
       payload,
       signature
     })
