@@ -222,6 +222,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
 function newHashedConfidentialDocsInstance () {
   return new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
+    ipfsAuthHeader: `Basic ${Buffer.from('2DB4cZf2ac86npYl2XnStjUg0Y9:a21bdbee67c178407ab9740f5102a4e1').toString('base64')}`,
     chainURI: 'ws://127.0.0.1:9944',
     appName: 'Confidential Docs',
     faucet
