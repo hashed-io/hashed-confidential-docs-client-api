@@ -10,6 +10,7 @@ class HashedConfidentialDocs {
    *
    * @param {Object} opts
    * @param {String} opts.ipfsURL the ipfs endpoint to use
+   * @param {String} [opts.ipfsAuthHeader] the ipfs authentication header if required
    * @param {String} opts.chainURI the hashed chain endpoint
    * @param {String} opts.appName the appName to use when enabling the web3 plugin
    * @param {Object} opts.faucet faucet instance object to use to fund newly created accounts @see model/BaseFaucet
@@ -20,12 +21,14 @@ class HashedConfidentialDocs {
     this._opts = opts
     const {
       ipfsURL,
+      ipfsAuthHeader,
       chainURI,
       appName,
       faucet
     } = opts
     this._ipfs = new IPFS({
-      url: ipfsURL
+      url: ipfsURL,
+      authHeader: ipfsAuthHeader
     })
     this._polkadot = new Polkadot({ wss: chainURI, appName })
     this._confidentialDocsApi = new ConfidentialDocsApi(this._polkadot, () => {})

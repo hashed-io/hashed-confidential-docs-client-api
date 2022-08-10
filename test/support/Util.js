@@ -12,7 +12,8 @@ class Util {
 
   setupIPFS () {
     return new IPFS({
-      url: 'https://ipfs.infura.io:5001'
+      url: 'https://ipfs.infura.io:5001',
+      authHeader: `Basic ${Buffer.from('2DB4cZf2ac86npYl2XnStjUg0Y9:a21bdbee67c178407ab9740f5102a4e1').toString('base64')}`
     })
   }
 
