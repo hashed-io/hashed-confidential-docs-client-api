@@ -1,27 +1,31 @@
 const { EventEmitter } = require('events')
 const { Keyring } = require('@polkadot/keyring')
-const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
+const { u8aToHex, u8aWrapBytes } = require('@polkadot/util')
+const { blake2AsHex, mnemonicGenerate, signatureVerify } = require('@polkadot/util-crypto')
 const { Crypto } = require('@smontero/hashed-crypto')
 const { PasswordGeneratedKeyCipher, PrivateKeyCipher, SignatureGeneratedKeyCipher } = require('@smontero/generated-key-cipher-providers')
 const { Polkadot } = require('../service')
 // const { LocalStorageKey } = require('../const')
 
+const PASSWORD_REGEX = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,}$/
 const _keyring = new Keyring()
 class Vault extends EventEmitter {
   constructor ({
+    polkadot,
     confidentialDocsApi,
     ipfs,
     faucet,
     keyExporter
   }) {
     super()
+    this._polkadot = polkadot
     this._confidentialDocsApi = confidentialDocsApi
     this._ipfs = ipfs
     this._faucet = faucet
     this._keyExporter = keyExporter
     this._crypto = new Crypto()
     this._vault = null
-    this._signer = null
+    this._wallet = null
     this._docCipher = null
   }
 
@@ -45,8 +49,7 @@ class Vault extends EventEmitter {
   }) {
     this.lock()
     const {
-      vault,
-      signer: sgnr
+      vault
     } = await _getVault({
       _this: this,
       signer,
@@ -56,14 +59,11 @@ class Vault extends EventEmitter {
     })
     // this._vault = vault
     // console.log('vault: ', vault)
-    this._signer = sgnr
-    this._docCipher = this._createDocCipher(vault)
-
-    if (sgnr.lock) {
-      this.once('lock', () => {
-        sgnr.lock()
-      })
-    }
+    const {
+      privateKey,
+      publicKey
+    } = vault
+    this._docCipher = _createDocCipher({ _this: this, privateKey, publicKey })
   }
 
   /**
@@ -160,14 +160,14 @@ class Vault extends EventEmitter {
       return
     }
     // this._vault = null
-    this._signer = null
+    this._wallet = null
     this._docCipher = null
     this.emit('lock')
     // localStorage.removeItem(LocalStorageKey.VAULT_CONTEXT)
   }
 
   isUnlocked () {
-    return !!this._signer
+    return !!this._wallet
   }
 
   assertIsUnlocked () {
@@ -190,9 +190,9 @@ class Vault extends EventEmitter {
     }
   }
 
-  getSigner () {
+  getWallet () {
     this.assertIsUnlocked()
-    return this._signer
+    return this._wallet
   }
 
   getDocCipher () {
@@ -212,7 +212,8 @@ class Vault extends EventEmitter {
       signer = _createKeyPair(vault.mnemonic)
       // TODO: Need a faucet to provide balance to the account so that it can call extrinsics
     }
-    await this._faucet.send(_getAddress(signer))
+    _configureWallet(this, signer)
+    await this._faucet.send(this.getAddress())
     await this._storeVault({
       userId,
       vault,
@@ -225,21 +226,16 @@ class Vault extends EventEmitter {
     }
   }
 
-  async _storeVault ({ userId, vault, cipher, signer }) {
+  async _storeVault ({ userId, vault, cipher }) {
     const cipheredVault = await cipher.cipher({ payload: vault })
     // console.log('cipheredVault1: ', cipheredVault)
     // console.log('signer: ', _getAddress(signer))
     const cid = await this._ipfs.add(cipheredVault)
     await this._confidentialDocsApi.setVault({
-      signer,
       userId,
       publicKey: vault.publicKey,
       cid
     })
-    return {
-      vault,
-      signer
-    }
   }
 
   async _updatePassword ({
@@ -279,73 +275,7 @@ class Vault extends EventEmitter {
       cipher,
       signer
     })
-  }
-
-  _createDocCipher ({
-    privateKey,
-    publicKey
-  }) {
-    const vault = this
-    vault.once('lock', () => {
-      privateKey = null
-    })
-    const crypto = new Crypto()
-    return {
-      async cipher ({
-        payload
-      }) {
-        this.assertIsUnlocked()
-        return crypto.cipher({
-          payload,
-          privateKey
-        })
-      },
-      async decipher ({
-        fullCipheredPayload
-      }) {
-        this.assertIsUnlocked()
-        return crypto.decipher({
-          fullCipheredPayload,
-          privateKey
-        })
-      },
-
-      async cipherFor ({
-        payload,
-        publicKey
-      }) {
-        this.assertIsUnlocked()
-        return crypto.cipherShared({
-          payload,
-          privateKey,
-          publicKey
-        })
-      },
-
-      async decipherFrom ({
-        fullCipheredPayload,
-        publicKey
-      }) {
-        this.assertIsUnlocked()
-        return crypto.decipherShared({
-          fullCipheredPayload,
-          privateKey,
-          publicKey
-        })
-      },
-      getPublicKey () {
-        this.assertIsUnlocked()
-        return publicKey
-      },
-      assertIsUnlocked () {
-        if (!this.isUnlocked()) {
-          throw new Error('Document cipher is locked')
-        }
-      },
-      isUnlocked () {
-        return !!privateKey
-      }
-    }
+    this.lock()
   }
 
   async _decipherVault (vaultDetails, cipher, signer = null) {
@@ -355,6 +285,7 @@ class Vault extends EventEmitter {
     if (!signer) {
       signer = _createKeyPair(vault.mnemonic)
     }
+    _configureWallet(this, signer)
     return {
       vault,
       signer
@@ -371,7 +302,7 @@ class Vault extends EventEmitter {
 
   getAddress () {
     this.assertIsUnlocked()
-    return _getAddress(this._signer)
+    return this._wallet.getAddress()
   }
 
   // _getContext () {
@@ -397,6 +328,9 @@ function _generatePassword ({
   password,
   userIdBase
 }) {
+  if (!PASSWORD_REGEX.test(password)) {
+    throw Error('The password must be at least 8 characters long, and contain at least one lowercase letter, one uppercase letter, one numeric digit, and one special character')
+  }
   return `${password}@${userIdBase}`
 }
 
@@ -506,4 +440,147 @@ async function _getVault ({
     vault,
     signer: sgnr
   }
+}
+
+function _createDocCipher ({
+  _this,
+  privateKey,
+  publicKey
+}) {
+  _this.once('lock', () => {
+    privateKey = null
+  })
+  const crypto = new Crypto()
+  return {
+    async cipher ({
+      payload
+    }) {
+      this.assertIsUnlocked()
+      return crypto.cipher({
+        payload,
+        privateKey
+      })
+    },
+    async decipher ({
+      fullCipheredPayload
+    }) {
+      this.assertIsUnlocked()
+      return crypto.decipher({
+        fullCipheredPayload,
+        privateKey
+      })
+    },
+
+    async cipherFor ({
+      payload,
+      publicKey
+    }) {
+      this.assertIsUnlocked()
+      return crypto.cipherShared({
+        payload,
+        privateKey,
+        publicKey
+      })
+    },
+
+    async decipherFrom ({
+      fullCipheredPayload,
+      publicKey
+    }) {
+      this.assertIsUnlocked()
+      return crypto.decipherShared({
+        fullCipheredPayload,
+        privateKey,
+        publicKey
+      })
+    },
+    getPublicKey () {
+      this.assertIsUnlocked()
+      return publicKey
+    },
+    assertIsUnlocked () {
+      if (!this.isUnlocked()) {
+        throw new Error('Document cipher is locked')
+      }
+    },
+    isUnlocked () {
+      return !!privateKey
+    }
+  }
+}
+
+function _createWallet ({
+  _this,
+  signer
+}) {
+  _this.once('lock', () => {
+    signer = null
+  })
+  return {
+    async callTx ({
+      polkadot,
+      palletName,
+      extrinsicName,
+      params,
+      txResponseHandler,
+      sudo = false
+    }) {
+      this.assertIsUnlocked()
+      params = params || []
+      // console.log('callTx: ', extrinsicName, signer, params)
+      let finalSigner = signer
+      if (!Polkadot.isKeyringPair(signer)) {
+        finalSigner = this.getAddress()
+        await polkadot.setWeb3Signer(finalSigner)
+      }
+      // console.log('callTx params', params)
+      let unsub
+      // eslint-disable-next-line no-async-promise-executor
+      return new Promise(async (resolve, reject) => {
+        try {
+          const tx = polkadot.tx()
+          let call = tx[palletName][extrinsicName](...params)
+          if (sudo) {
+            call = tx.sudo.sudo(call)
+          }
+          unsub = await call.signAndSend(finalSigner, (e) => txResponseHandler(e, resolve, reject, unsub))
+        } catch (e) {
+          reject(e)
+        }
+      })
+    },
+    async sign ({ polkadot, payload }) {
+      const data = u8aToHex(u8aWrapBytes(payload))
+      if (Polkadot.isKeyringPair(signer)) {
+        return u8aToHex(signer.sign(data))
+      } else {
+        const injector = await polkadot._getInjector(signer)
+        return injector.signer.signRaw({
+          address: signer,
+          data,
+          type: 'bytes'
+        }).signature
+      }
+    },
+    verifySignature ({ payload, signature }) {
+      return signatureVerify(payload, signature, this.getAddress())
+    },
+    getAddress () {
+      this.assertIsUnlocked()
+      return _getAddress(signer)
+    },
+    assertIsUnlocked () {
+      if (!this.isUnlocked()) {
+        throw new Error('Signer is locked')
+      }
+    },
+    isUnlocked () {
+      return !!signer
+    }
+  }
+}
+
+function _configureWallet (_this, signer) {
+  _this._wallet = _createWallet({ _this, signer })
+  _this._polkadot.setWallet(_this._wallet)
 }

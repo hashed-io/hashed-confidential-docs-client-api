@@ -1,11 +1,11 @@
 const BasePolkadotApi = require('./BasePolkadotApi')
 
 class ConfidentialDocsApi extends BasePolkadotApi {
-  constructor (polkadotApi, notify) {
-    super(polkadotApi, 'confidentialDocs', notify)
+  constructor (polkadot, notify) {
+    super(polkadot, 'confidentialDocs', notify)
   }
 
-  async setVault ({ signer, userId, publicKey, cid }) {
+  async setVault ({ signer = null, userId, publicKey, cid }) {
     return this.callTx({
       extrinsicName: 'setVault',
       signer,
@@ -13,7 +13,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async setOwnedDoc ({ signer, ownedDoc }) {
+  async setOwnedDoc ({ signer = null, ownedDoc }) {
     return this.callTx({
       extrinsicName: 'setOwnedDocument',
       signer,
@@ -21,7 +21,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async removeOwnedDoc ({ signer, cid }) {
+  async removeOwnedDoc ({ signer = null, cid }) {
     return this.callTx({
       extrinsicName: 'removeOwnedDocument',
       signer,
@@ -29,7 +29,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async sharedDoc ({ signer, sharedDoc }) {
+  async sharedDoc ({ signer = null, sharedDoc }) {
     return this.callTx({
       extrinsicName: 'shareDocument',
       signer,
@@ -37,7 +37,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async updateSharedDocMetadata ({ signer, sharedDoc }) {
+  async updateSharedDocMetadata ({ signer = null, sharedDoc }) {
     return this.callTx({
       extrinsicName: 'updateSharedDocumentMetadata',
       signer,
@@ -45,7 +45,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async removeSharedDoc ({ signer, cid }) {
+  async removeSharedDoc ({ signer = null, cid }) {
     return this.callTx({
       extrinsicName: 'removeSharedDocument',
       signer,

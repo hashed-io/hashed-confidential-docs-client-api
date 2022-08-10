@@ -1,42 +1,36 @@
-jest.setTimeout(40000)
+jest.setTimeout(50000)
 global.window = { addEventListener () {} }
 global.File = class {}
 const { HashedConfidentialDocs } = require('../src')
 const { LocalAccountFaucet } = require('../src/model')
-const { BalancesApi, ConfidentialDocsApi } = require('../src/service')
+const { BalancesApi, Polkadot } = require('../src/service')
 const Util = require('./support/Util')
 
 let hcd = null
 let polkadot = null
 let faucet = null
-let signer1 = null
-let confidentialDocsApi = null
 const util = new Util()
-beforeAll(async () => {
+beforeEach(async () => {
+  await util.restartNode()
   polkadot = await util.setupPolkadot()
   polkadot.setWeb3Signer = async function () {}
   faucet = new LocalAccountFaucet({
-    balancesApi: new BalancesApi(polkadot, () => {}),
+    balancesApi: new BalancesApi(new Polkadot({ api: polkadot._api }), () => {}),
     signer: util.getKeypair('//Alice'),
     amount: 1000000000
   })
-  confidentialDocsApi = new ConfidentialDocsApi(polkadot, () => {})
-  signer1 = util.getKeypair('//Alice')
   hcd = newHashedConfidentialDocsInstance()
   hcd._polkadot.setWeb3Signer = async function () {}
 })
 
-beforeEach(async () => {
-  await logout()
-})
-
-beforeEach(async () => {
-  await confidentialDocsApi.killStorage(signer1)
+afterEach(async () => {
+  await polkadot.disconnect()
+  await util.killNode()
 })
 
 describe('HashedConfidentialDocs Integration Tests', () => {
   test('Should not be able to work with owned data and shared data if not logged in', async () => {
-    expect.assertions(8)
+    expect.assertions(7)
     expect(hcd.isLoggedIn()).toBe(false)
     try {
       hcd.ownedData()
@@ -60,7 +54,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     }
 
     try {
-      await hcd.sharedData().viewByID({ id: 1 })
+      await hcd.sharedData().viewByCID({ id: 1 })
     } catch (err) {
       expect(err.message).toContain('The vault is locked')
     }
@@ -110,7 +104,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
   })
 
   test('Should fail for non owner trying to view owned data', async () => {
-    expect.assertions(11)
+    expect.assertions(10)
     const {
       ownedData
     } = await setupOwnedData(1)
@@ -154,7 +148,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
   })
 
   test('Should fail for non owner trying to view shared data', async () => {
-    expect.assertions(16)
+    expect.assertions(15)
     const { actual } = await setupSharedData(1, 2)
     await logout()
     await login(util.getSSOUserDetails(3))
@@ -222,8 +216,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
 function newHashedConfidentialDocsInstance () {
   return new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
-    chainURI: 'ws://127.0.0.1:9944',
-    appName: 'Confidential Docs',
+    polkadot,
     faucet
   })
 }

@@ -17,10 +17,6 @@ class BaseConfidentialData {
     return this._vault.getDocCipher()
   }
 
-  _signer () {
-    return this._vault.getSigner()
-  }
-
   _address () {
     return this._vault.getAddress()
   }

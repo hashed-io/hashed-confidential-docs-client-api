@@ -1,5 +1,5 @@
 const { BrowserDownloadKeyExporter, OwnedData, SharedData, Vault } = require('./model')
-const { ConfidentialDocsApi, IPFS, Polkadot } = require('./service')
+const { ConfidentialDocsApi, IPFS } = require('./service')
 
 /**
  * Provides access to all the hashed confidential docs functionality
@@ -8,28 +8,24 @@ class HashedConfidentialDocs {
   /**
    * @desc Create a hashed confidential docs instance
    *
-   * @param {Object} opts
-   * @param {String} opts.ipfsURL the ipfs endpoint to use
-   * @param {String} opts.chainURI the hashed chain endpoint
-   * @param {String} opts.appName the appName to use when enabling the web3 plugin
-   * @param {Object} opts.faucet faucet instance object to use to fund newly created accounts @see model/BaseFaucet
+   * @param {String} ipfsURL the ipfs endpoint to use
+   * @param {Object} polkadot An instance of the polkadot class @see service/Polkadot
+   * @param {Object} faucet faucet instance object to use to fund newly created accounts @see model/BaseFaucet
    *
    * @return {Object} instance of hashed confidential docs
    */
-  constructor (opts) {
-    this._opts = opts
-    const {
-      ipfsURL,
-      chainURI,
-      appName,
-      faucet
-    } = opts
+  constructor ({
+    ipfsURL,
+    polkadot,
+    faucet
+  }) {
     this._ipfs = new IPFS({
       url: ipfsURL
     })
-    this._polkadot = new Polkadot({ wss: chainURI, appName })
+    this._polkadot = polkadot
     this._confidentialDocsApi = new ConfidentialDocsApi(this._polkadot, () => {})
     this._vault = new Vault({
+      polkadot,
       confidentialDocsApi: this._confidentialDocsApi,
       ipfs: this._ipfs,
       faucet,

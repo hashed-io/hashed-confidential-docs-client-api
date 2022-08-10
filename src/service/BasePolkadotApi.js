@@ -3,14 +3,14 @@ const Polkadot = require('./Polkadot')
 class BasePolkadotApi {
   /**
    * Class constructor
-   * @param {PolkadotApi} polkadotApi Instance from PolkadotApi class
+   * @param {Polkadot} polkadot Instance from Polkadot class
    * @param {String} palletName Pallet Name
    */
-  constructor (polkadotApi, palletName, notify) {
-    if (!(polkadotApi instanceof Polkadot)) {
-      polkadotApi = new Polkadot({ api: polkadotApi })
+  constructor (polkadot, palletName, notify) {
+    if (!(polkadot instanceof Polkadot)) {
+      polkadot = new Polkadot({ api: polkadot })
     }
-    this.polkadotApi = polkadotApi
+    this.polkadot = polkadot
     this.palletName = palletName
     this.notify = notify
   }
@@ -25,31 +25,20 @@ class BasePolkadotApi {
    */
   async callTx ({
     extrinsicName,
-    signer,
     params,
+    signer = null,
     sudo = false
   }) {
-    params = params || []
-    console.log('callTx: ', extrinsicName, signer, params)
-    let finalSigner = signer
-    if (!Polkadot.isKeyringPair(signer)) {
-      finalSigner = Polkadot.getAddress(signer)
-      await this.polkadotApi.setWeb3Signer(finalSigner)
+    const txResponseHandler = (e, resolve, reject, unsub) => {
+      this.handlerTXResponse(e, resolve, reject, unsub)
     }
-    // console.log('callTx params', params)
-    let unsub
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      try {
-        const tx = this.polkadotApi.tx()
-        let call = tx[this.palletName][extrinsicName](...params)
-        if (sudo) {
-          call = tx.sudo.sudo(call)
-        }
-        unsub = await call.signAndSend(finalSigner, (e) => this.handlerTXResponse(e, resolve, reject, unsub))
-      } catch (e) {
-        reject(e)
-      }
+    return this.polkadot.callTx({
+      palletName: this.palletName,
+      extrinsicName,
+      params,
+      txResponseHandler,
+      signer,
+      sudo
     })
   }
 
@@ -62,7 +51,7 @@ class BasePolkadotApi {
    * @returns Query response or unsubscribe function from polkadot api
    */
   async exQuery (queryName, params, subTrigger) {
-    return this.polkadotApi.query()[this.palletName][queryName](...params, subTrigger)
+    return this.polkadot.query()[this.palletName][queryName](...params, subTrigger)
   }
 
   /**
@@ -74,7 +63,7 @@ class BasePolkadotApi {
    * @returns Query response or unsubscribe function from polkadot api
    */
   async exMultiQuery (queryName, params, subTrigger) {
-    return this.polkadotApi.query()[this.palletName][queryName].multi(params, subTrigger)
+    return this.polkadot.query()[this.palletName][queryName].multi(params, subTrigger)
   }
 
   /**
@@ -86,7 +75,7 @@ class BasePolkadotApi {
    * @returns Query response or unsubscribe function from polkadot api
    */
   async exEntriesQuery (queryName, params, subTrigger) {
-    return this.polkadotApi.query()[this.palletName][queryName].entries(...params)
+    return this.polkadot.query()[this.palletName][queryName].entries(...params)
   }
 
   /**
@@ -154,7 +143,7 @@ class BasePolkadotApi {
    * [{ address, meta: { genesisHash, name, source }, type }]
    */
   requestUsers () {
-    return this.polkadotApi.requestUsers()
+    return this.polkadot.requestUsers()
   }
 
   /**
@@ -165,7 +154,7 @@ class BasePolkadotApi {
    * { identity }
    */
   getAccountInfo (user) {
-    return this.polkadotApi.getAccountInfo(user)
+    return this.polkadot.getAccountInfo(user)
   }
 
   /**
@@ -175,7 +164,7 @@ class BasePolkadotApi {
    * @returns BooleanP
    */
   isValidPolkadotAddress (address) {
-    return this.polkadotApi.isValidPolkadotAddress(address)
+    return this.polkadot.isValidPolkadotAddress(address)
   }
 
   /**
@@ -186,7 +175,7 @@ class BasePolkadotApi {
    * @returns Object
    */
   async signMessage (message, signer) {
-    return this.polkadotApi.signMessage(message, signer)
+    return this.polkadot.signMessage(message, signer)
   }
 
   /**
@@ -198,7 +187,7 @@ class BasePolkadotApi {
    * @returns Object
    */
   async verifyMessage (message, signature, signer) {
-    return this.polkadotApi.verifyMessage(message, signature, signer)
+    return this.polkadot.verifyMessage(message, signature, signer)
   }
 
   /**

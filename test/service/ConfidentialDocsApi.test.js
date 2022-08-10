@@ -14,7 +14,8 @@ let signer2 = null
 let signer3 = null
 let polkadot = null
 const util = new Util()
-beforeAll(async () => {
+beforeEach(async () => {
+  await util.restartNode()
   polkadot = await util.setupPolkadot()
   confidentialDocsApi = new ConfidentialDocsApi(polkadot, () => {})
   // console.log(confidentialDocsApi)
@@ -24,12 +25,9 @@ beforeAll(async () => {
   // console.log(signer1.address)
 })
 
-afterAll(async () => {
+afterEach(async () => {
   await polkadot.disconnect()
-})
-
-beforeEach(async () => {
-  await confidentialDocsApi.killStorage(signer1)
+  await util.killNode()
 })
 
 describe('Test confidential docs pallet', () => {

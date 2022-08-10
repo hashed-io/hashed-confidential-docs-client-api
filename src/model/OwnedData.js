@@ -94,7 +94,7 @@ class OwnedData extends BaseConfidentialData {
    * @return {Object} tx response from polkadot api
    */
   async remove (cid) {
-    return this._confidentialDocsApi.removeOwnedDoc({ cid, signer: this._signer() })
+    return this._confidentialDocsApi.removeOwnedDoc({ cid })
   }
 
   /**
@@ -161,8 +161,7 @@ class OwnedData extends BaseConfidentialData {
       owner: this._address()
     }
     await this._api().setOwnedDoc({
-      ownedDoc,
-      signer: this._signer()
+      ownedDoc
     })
     return ownedDoc
   }

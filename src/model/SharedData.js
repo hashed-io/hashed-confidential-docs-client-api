@@ -121,8 +121,7 @@ class SharedData extends BaseConfidentialData {
       to: toUserAddress
     }
     await this._api().sharedDoc({
-      sharedDoc,
-      signer: this._signer()
+      sharedDoc
     })
     return sharedDoc
   }
@@ -146,8 +145,7 @@ class SharedData extends BaseConfidentialData {
         cid,
         name,
         description
-      },
-      signer: this._signer()
+      }
     })
   }
 
@@ -159,7 +157,7 @@ class SharedData extends BaseConfidentialData {
    * @return {Object} tx response from polkadot api
    */
   async remove (cid) {
-    return this._confidentialDocsApi.removeSharedDoc({ cid, signer: this._signer() })
+    return this._confidentialDocsApi.removeSharedDoc({ cid })
   }
 
   /**
