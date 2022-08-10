@@ -100,8 +100,13 @@ class Util {
 
   setupIPFS () {
     return new IPFS({
-      url: 'https://ipfs.infura.io:5001'
+      url: 'https://ipfs.infura.io:5001',
+      authHeader: this.getIPFSAuthHeader()
     })
+  }
+
+  getIPFSAuthHeader () {
+    return `Basic ${Buffer.from(`${process.env.IPFS_PROJECT_ID}:${process.env.IPFS_PROJECT_SECRET}`).toString('base64')}`
   }
 
   async setupPolkadot () {

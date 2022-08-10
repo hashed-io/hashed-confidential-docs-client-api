@@ -216,6 +216,7 @@ describe('HashedConfidentialDocs Integration Tests', () => {
 function newHashedConfidentialDocsInstance () {
   return new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
+    ipfsAuthHeader: util.getIPFSAuthHeader(),
     polkadot,
     faucet
   })

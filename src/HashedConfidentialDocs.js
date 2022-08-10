@@ -9,6 +9,7 @@ class HashedConfidentialDocs {
    * @desc Create a hashed confidential docs instance
    *
    * @param {String} ipfsURL the ipfs endpoint to use
+   * @param {String} [opts.ipfsAuthHeader] the ipfs authentication header if required
    * @param {Object} polkadot An instance of the polkadot class @see service/Polkadot
    * @param {Object} faucet faucet instance object to use to fund newly created accounts @see model/BaseFaucet
    *
@@ -16,11 +17,13 @@ class HashedConfidentialDocs {
    */
   constructor ({
     ipfsURL,
+    ipfsAuthHeader,
     polkadot,
     faucet
   }) {
     this._ipfs = new IPFS({
-      url: ipfsURL
+      url: ipfsURL,
+      authHeader: ipfsAuthHeader
     })
     this._polkadot = polkadot
     this._confidentialDocsApi = new ConfidentialDocsApi(this._polkadot, () => {})
