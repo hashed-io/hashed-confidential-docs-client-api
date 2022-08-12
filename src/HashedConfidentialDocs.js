@@ -51,21 +51,10 @@ class HashedConfidentialDocs {
    * using single sign on
    * @throws error in case the login fails
    */
-  async login ({
-    signer = null,
-    ssoProvider = null,
-    ssoUserId = null,
-    password = null
-
-  }) {
+  async login (vaultAuthProvider) {
     await this._polkadot.connect()
     await this.logout()
-    await this._vault.unlock({
-      signer,
-      ssoProvider,
-      ssoUserId,
-      password
-    })
+    await this._vault.unlock(vaultAuthProvider)
     const params = {
       confidentialDocsApi: this._confidentialDocsApi,
       ipfs: this._ipfs,

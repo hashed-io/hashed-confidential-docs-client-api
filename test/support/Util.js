@@ -2,6 +2,7 @@ const find = require('find-process')
 const sleep = require('await-sleep')
 const { spawn } = require('node:child_process')
 const { Keyring } = require('@polkadot/keyring')
+const { PasswordVaultAuthProvider } = require('../../src/model')
 const { IPFS, Polkadot } = require('../../src/service')
 
 class Util {
@@ -122,12 +123,14 @@ class Util {
     return polkadot
   }
 
-  getSSOUserDetails (id) {
-    return {
-      ssoProvider: 'google',
-      ssoUserId: `1232323#${id}`,
+  async getPasswordVaultAuthProvider (id) {
+    const provider = new PasswordVaultAuthProvider({
+      authName: 'afloat',
+      userId: `1232323#${id}`,
       password: `Str15n$g3#${id}`
-    }
+    })
+    await provider.init()
+    return provider
   }
 }
 
