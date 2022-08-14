@@ -176,6 +176,7 @@ class Vault extends EventEmitter {
       publicKey: vault.publicKey,
       cid
     })
+    await vaultAuthProvider.onVaultStored()
   }
 
   async _decipherVault (vaultDetails, vaultAuthProvider) {

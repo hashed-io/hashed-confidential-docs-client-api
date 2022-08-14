@@ -37,6 +37,12 @@ class BaseVaultAuthProvider {
 
   async init () {}
 
+  /**
+   * This method should be overridden by VaultAuthProviders that require to do some processing
+   * after it is confirmed that the vault has been successfully stored
+   */
+  async onVaultStored () {}
+
   async cipher (vault) {
     throw new Error('Subclass must override the cipher method')
   }
