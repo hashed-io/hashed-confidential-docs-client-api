@@ -22,7 +22,7 @@ class Google {
     return this._gapi.client.load(lib)
   }
 
-  async requesToken ({
+  async requestToken ({
     email,
     scope
   }) {
