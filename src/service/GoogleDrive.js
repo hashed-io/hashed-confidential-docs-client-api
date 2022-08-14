@@ -6,7 +6,7 @@ class GoogleDrive {
   async init (email) {
     await this._google.init()
     await this._google.loadLibrary('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest')
-    await this._requestToken({
+    await this._google.requestToken({
       email,
       scope: 'https://www.googleapis.com/auth/drive.appdata'
     })
