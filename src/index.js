@@ -1,6 +1,6 @@
 const HashedConfidentialDocs = require('./HashedConfidentialDocs')
 const { BalancesApi, Polkadot, Google, GoogleDrive } = require('./service')
-const { BaseFaucet, LocalAccountFaucet } = require('./model')
+const { BaseFaucet, LocalAccountFaucet, GoogleVaultAuthProvider, PasswordVaultAuthProvider } = require('./model')
 
 module.exports = {
   HashedConfidentialDocs,
@@ -9,5 +9,7 @@ module.exports = {
   BalancesApi,
   Polkadot,
   Google,
-  GoogleDrive
+  GoogleDrive,
+  GoogleVaultAuthProvider,
+  PasswordVaultAuthProvider
 }
