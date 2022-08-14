@@ -38,11 +38,11 @@ class GoogleVaultAuthProvider extends BaseVaultAuthProvider {
       }
     }
     const appProperties = file.appProperties
-    if (!file.id || (this._createNew && !appProperties[PENDING_KEY_NAME])) {
+    if (!file.fileId || (this._createNew && !appProperties[PENDING_KEY_NAME])) {
       appProperties[PENDING_KEY_NAME] = (new Crypto()).generateKeyPair().privateKey
-      const op = file.id ? 'updateFile' : 'createFile'
+      const op = file.fileId ? 'updateFile' : 'createFile'
       const { id } = await this._drive[op](file)
-      file.id = id
+      file.fileId = id
     }
     this._cipher = _createCipher({
       _this: this,
@@ -67,11 +67,16 @@ class GoogleVaultAuthProvider extends BaseVaultAuthProvider {
   }
 
   async _getMetadataFile () {
-    return this._drive.getFileByName({
+    const file = await this._drive.getFileByName({
       name: METADATA_FILE_NAME,
       fields: 'id, appProperties',
       spaces: 'appDataFolder'
     })
+    if (file) {
+      file.fileId = file.id
+      delete file.id
+    }
+    return file
   }
 }
 

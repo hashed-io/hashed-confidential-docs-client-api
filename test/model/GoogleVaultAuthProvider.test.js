@@ -43,6 +43,7 @@ describe('Test init/onVaultStored', () => {
 
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
+      fileId: 1,
       appProperties: {
         pendingKey: null,
         currentKey: key
@@ -79,6 +80,7 @@ describe('Test init/onVaultStored', () => {
     await provider.onVaultStored()
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
+      fileId: 1,
       updateOfNewFile: false,
       appProperties: {
         pendingKey: null,
@@ -105,6 +107,7 @@ describe('Test init/onVaultStored', () => {
     expect(googleDrive.createFile).toBeCalledTimes(0)
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
+      fileId: 1,
       updateOfNewFile: false,
       appProperties: {
         pendingKey: '',
@@ -115,6 +118,7 @@ describe('Test init/onVaultStored', () => {
     await provider.onVaultStored()
     expect(googleDrive.updateFile).toBeCalledTimes(2)
     assertMetadataFile(googleDrive.updateFile.mock.calls[1][0], {
+      fileId: 1,
       updateOfNewFile: false,
       appProperties: {
         pendingKey: null,
@@ -145,6 +149,7 @@ describe('Test init/onVaultStored', () => {
     await provider.onVaultStored()
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
+      fileId: 1,
       updateOfNewFile: false,
       appProperties: {
         pendingKey: null,
@@ -154,10 +159,10 @@ describe('Test init/onVaultStored', () => {
   })
 })
 
-function assertMetadataFile (actual, { id, appProperties, updateOfNewFile = true }) {
+function assertMetadataFile (actual, { fileId, appProperties, updateOfNewFile = true }) {
   expect(actual).not.toBeNull()
-  if (id) {
-    expect(actual.id).toBe(id)
+  if (fileId) {
+    expect(actual.fileId).toBe(fileId)
   }
   if (updateOfNewFile) {
     expect(actual.name).toBe('hcd.metadata')
