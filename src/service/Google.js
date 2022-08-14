@@ -53,7 +53,7 @@ class Google {
 
   async request (client, method, params) {
     try {
-      const { result } = await this._getClientFromStr[method](params)
+      const { result } = await this._getClientFromStr(client)[method](params)
       return result
     } catch (error) {
       throw new Error(`failed calling method: ${method} of google client:${client}, with params:${JSON.stringify(params, null, 4)}, error: ${error.message}`)
