@@ -87,7 +87,7 @@ class Google {
         console.log('Token requested, making new request')
         return this.request(client, method, params)
       } catch (error) {
-        throw new Error(`failed calling method: ${method} of google client:${client}, with params:${JSON.stringify(params, null, 4)}, error: ${error.message}`)
+        throw new Error(`failed calling method: ${method} of google client:${client}, with params:${JSON.stringify(params, null, 4)}, error: ${JSON.stringify(error, null, 4)}`)
       }
     }
   }
