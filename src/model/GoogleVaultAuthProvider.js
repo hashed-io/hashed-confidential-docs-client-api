@@ -99,13 +99,18 @@ function _createCipher ({
     async cipher (vault) {
       return cphr.cipher({ payload: vault })
     },
-    async decipher (vault) {
-      return cphr.decipher({ fullCipheredPayload: vault })
+    async decipher (cipheredVault) {
+      const vault = await cphr.decipher({ fullCipheredPayload: cipheredVault })
+      await this._confirmKey()
+      return vault
     },
     async exportKey () {
       return _this._keyExporter.export(cphr.privateKey())
     },
     async onVaultStored () {
+      return this._confirmKey()
+    },
+    async _confirmKey () {
       if (isPendingKey) {
         appProperties[CURRENT_KEY_NAME] = appProperties[PENDING_KEY_NAME]
         appProperties[PENDING_KEY_NAME] = null
