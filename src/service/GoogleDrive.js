@@ -4,12 +4,11 @@ class GoogleDrive {
   }
 
   async init (email) {
-    await this._google.init()
-    await this._google.loadLibrary('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest')
-    await this._google.requestToken({
+    await this._google.init({
       email,
       scope: 'https://www.googleapis.com/auth/drive.appdata'
     })
+    await this._google.loadLibrary('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest')
   }
 
   async createFile (params) {
