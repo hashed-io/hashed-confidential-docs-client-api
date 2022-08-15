@@ -27,7 +27,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
   }
 
   confirm (details, onConfirm, onCancel) {
-    this._showModal('', onConfirm, onCancel)
+    this._showModal(`<p>${JSON.stringify(details, null, 4)}</p>`, onConfirm, onCancel)
   }
 
   _showModal (content, onConfirm, onCancel) {
@@ -42,6 +42,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       this._cancelBtn = this._getModalElement('mac-modal-cancel-btn')
       this._confirmBtn = this._getModalElement('mac-modal-confirm-btn')
     }
+    this._content.innerHTML = content
     this._cancelBtn.onclick = () => {
       this._hide()
       onCancel('User cancelled action')
