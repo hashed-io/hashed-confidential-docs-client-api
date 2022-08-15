@@ -379,17 +379,32 @@ function _createWallet ({
       })
     },
     async sign ({ polkadot, payload }) {
-      const data = u8aToHex(u8aWrapBytes(payload))
-      if (Polkadot.isKeyringPair(signer)) {
-        return u8aToHex(signer.sign(data))
-      } else {
-        const injector = await polkadot._getInjector(signer)
-        return injector.signer.signRaw({
-          address: signer,
-          data,
-          type: 'bytes'
-        }).signature
-      }
+      this.assertIsUnlocked()
+      return new Promise((resolve, reject) => {
+        const onConfirm = async () => {
+          try {
+            const result = await _sign({
+              _this: this,
+              polkadot,
+              payload,
+              signer
+            })
+            resolve(result)
+          } catch (error) {
+            reject(error)
+          }
+        }
+        const onCancel = (reason) => {
+          reject(new Error(reason))
+        }
+        _this._actionConfirmer.confirm({
+          payload,
+          address: this.getAddress()
+        },
+        onConfirm,
+        onCancel
+        )
+      })
     },
     verifySignature ({ payload, signature }) {
       return signatureVerify(payload, signature, this.getAddress())
@@ -442,6 +457,21 @@ async function _callTx ({
       reject(e)
     }
   })
+}
+
+async function _sign ({ _this, polkadot, payload, signer }) {
+  _this.assertIsUnlocked()
+  const data = u8aToHex(u8aWrapBytes(payload))
+  if (Polkadot.isKeyringPair(signer)) {
+    return u8aToHex(signer.sign(data))
+  } else {
+    const injector = await polkadot._getInjector(signer)
+    return injector.signer.signRaw({
+      address: signer,
+      data,
+      type: 'bytes'
+    }).signature
+  }
 }
 
 function _configureWallet (_this, signer) {
