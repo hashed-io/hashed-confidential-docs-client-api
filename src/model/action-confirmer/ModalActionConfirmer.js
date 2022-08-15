@@ -38,9 +38,9 @@ class ModalActionConfirmer extends BaseActionConfirmer {
         d.body.insertAdjacentHTML('beforeend', modalHtml)
       }
       this._modal = elements[0]
-      this._content = this._modal.getElementsByClassName('mac-modal-content')
-      this._cancelBtn = this._modal.getElementsByClassName('mac-modal-cancel-btn')
-      this._confirmBtn = this._modal.getElementsByClassName('mac-modal-confirm-btn')
+      this._content = this._getModalElement('mac-modal-content')
+      this._cancelBtn = this._getModalElement('mac-modal-cancel-btn')
+      this._confirmBtn = this._getModalElement('mac-modal-confirm-btn')
     }
     this._cancelBtn.onclick = () => {
       this._hide()
@@ -51,6 +51,10 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       onConfirm()
     }
     this._display()
+  }
+
+  _getModalElement (className) {
+    return this._modal.getElementsByClassName(className)[0]
   }
 
   _hide () {
