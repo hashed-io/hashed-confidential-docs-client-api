@@ -1,4 +1,5 @@
-const { BrowserDownloadKeyExporter, OwnedData, SharedData, Vault } = require('./model')
+const { ModalActionConfirmer } = require('./model/action-confirmer')
+const { OwnedData, SharedData, Vault } = require('./model')
 const { ConfidentialDocsApi, IPFS } = require('./service')
 
 /**
@@ -32,7 +33,7 @@ class HashedConfidentialDocs {
       confidentialDocsApi: this._confidentialDocsApi,
       ipfs: this._ipfs,
       faucet,
-      keyExporter: new BrowserDownloadKeyExporter()
+      actionConfirmer: new ModalActionConfirmer()
     })
 
     this._ownedData = null

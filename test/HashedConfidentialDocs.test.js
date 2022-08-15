@@ -3,6 +3,7 @@ global.window = { addEventListener () {} }
 global.File = class {}
 const { HashedConfidentialDocs } = require('../src')
 const { LocalAccountFaucet } = require('../src/model')
+const { PredefinedActionConfirmer } = require('../src/model/action-confirmer')
 const { BalancesApi, Polkadot } = require('../src/service')
 const Util = require('./support/Util')
 
@@ -214,12 +215,14 @@ describe('HashedConfidentialDocs Integration Tests', () => {
 })
 
 function newHashedConfidentialDocsInstance () {
-  return new HashedConfidentialDocs({
+  const hcd = new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
     ipfsAuthHeader: util.getIPFSAuthHeader(),
     polkadot,
     faucet
   })
+  hcd._vault._actionConfirmer = new PredefinedActionConfirmer()
+  return hcd
 }
 async function setupSharedData (id1, id2) {
   const vaultAuthProvider1 = await util.getPasswordVaultAuthProvider(id1)

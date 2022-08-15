@@ -12,7 +12,8 @@ class Vault extends EventEmitter {
     polkadot,
     confidentialDocsApi,
     ipfs,
-    faucet
+    faucet,
+    actionConfirmer
   }) {
     super()
     this._polkadot = polkadot
@@ -23,6 +24,7 @@ class Vault extends EventEmitter {
     this._vault = null
     this._wallet = null
     this._docCipher = null
+    this._actionConfirmer = actionConfirmer
   }
 
   /**
@@ -343,27 +345,37 @@ function _createWallet ({
       sudo = false
     }) {
       this.assertIsUnlocked()
-      params = params || []
-      // console.log('callTx: ', extrinsicName, signer, params)
-      let finalSigner = signer
-      if (!Polkadot.isKeyringPair(signer)) {
-        finalSigner = this.getAddress()
-        await polkadot.setWeb3Signer(finalSigner)
-      }
-      // console.log('callTx params', params)
-      let unsub
-      // eslint-disable-next-line no-async-promise-executor
-      return new Promise(async (resolve, reject) => {
-        try {
-          const tx = polkadot.tx()
-          let call = tx[palletName][extrinsicName](...params)
-          if (sudo) {
-            call = tx.sudo.sudo(call)
+
+      return new Promise((resolve, reject) => {
+        const onConfirm = async () => {
+          try {
+            const result = await _callTx({
+              _this: this,
+              polkadot,
+              palletName,
+              extrinsicName,
+              signer,
+              params,
+              txResponseHandler,
+              sudo
+            })
+            resolve(result)
+          } catch (error) {
+            reject(error)
           }
-          unsub = await call.signAndSend(finalSigner, (e) => txResponseHandler(e, resolve, reject, unsub))
-        } catch (e) {
-          reject(e)
         }
+        const onCancel = (reason) => {
+          reject(new Error(reason))
+        }
+        _this._actionConfirmer.confirm({
+          palletName,
+          extrinsicName,
+          params,
+          address: this.getAddress()
+        },
+        onConfirm,
+        onCancel
+        )
       })
     },
     async sign ({ polkadot, payload }) {
@@ -395,6 +407,41 @@ function _createWallet ({
       return !!signer
     }
   }
+}
+
+async function _callTx ({
+  _this,
+  polkadot,
+  palletName,
+  extrinsicName,
+  signer,
+  params,
+  txResponseHandler,
+  sudo = false
+}) {
+  _this.assertIsUnlocked()
+  params = params || []
+  // console.log('callTx: ', extrinsicName, signer, params)
+  let finalSigner = signer
+  if (!Polkadot.isKeyringPair(signer)) {
+    finalSigner = _this.getAddress()
+    await polkadot.setWeb3Signer(finalSigner)
+  }
+  // console.log('callTx params', params)
+  let unsub
+  // eslint-disable-next-line no-async-promise-executor
+  return new Promise(async (resolve, reject) => {
+    try {
+      const tx = polkadot.tx()
+      let call = tx[palletName][extrinsicName](...params)
+      if (sudo) {
+        call = tx.sudo.sudo(call)
+      }
+      unsub = await call.signAndSend(finalSigner, (e) => txResponseHandler(e, resolve, reject, unsub))
+    } catch (e) {
+      reject(e)
+    }
+  })
 }
 
 function _configureWallet (_this, signer) {

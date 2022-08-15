@@ -4,14 +4,15 @@ jest.setTimeout(20000)
 global.window = { addEventListener () {} }
 // global.document = {}
 global.File = class {}
-const { LocalAccountFaucet, PasswordVaultAuthProvider, RememberKeyExporter, Vault } = require('../../src/model')
+const { LocalAccountFaucet, PasswordVaultAuthProvider, Vault } = require('../../src/model')
+const { PredefinedActionConfirmer } = require('../../src/model/action-confirmer')
 const { BalancesApi, ConfidentialDocsApi, Polkadot } = require('../../src/service')
 const Util = require('../support/Util')
 
 let confidentialDocsApi = null
 let polkadot = null
 let vault = null
-const keyExporter = new RememberKeyExporter()
+const actionConfirmer = new PredefinedActionConfirmer()
 const util = new Util()
 
 beforeEach(async () => {
@@ -29,7 +30,7 @@ beforeEach(async () => {
     confidentialDocsApi,
     ipfs: util.setupIPFS(),
     faucet,
-    keyExporter
+    actionConfirmer
   })
 
   // vault._generateMnemonic = jest.fn()
