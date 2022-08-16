@@ -1,9 +1,8 @@
 const { EventEmitter } = require('events')
 const { Keyring } = require('@polkadot/keyring')
-const { u8aToHex, u8aWrapBytes } = require('@polkadot/util')
-const { blake2AsHex, mnemonicGenerate, signatureVerify } = require('@polkadot/util-crypto')
+const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
 const { Crypto } = require('@smontero/hashed-crypto')
-const { Polkadot } = require('../service')
+const { VaultWallet } = require('../model/wallet')
 // const { LocalStorageKey } = require('../const')
 
 const _keyring = new Keyring()
@@ -29,14 +28,10 @@ class Vault extends EventEmitter {
 
   /**
    * Unlocks the user vault and retrieves the users secret data,
-   * if the user has logged in using a polkadot wallet the signer must be provided,
-   * if the user has logged in using single sign on the ssoProvider, ssoUserId and password must be provided
    * if a vault does not exist a vault is created
-   * @param {Keyring} [signer] the substrate account related signer
-   * @param {String} [ssoProvider] the single sign on user id required if using sso
-   * @param {String} [ssoUserId] the single sign on user id required if using sso
-   * @param {String} [password] the password used to generate the vault cipher key required when
-   * using single sign on
+   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * enables the ciphering/deciphering of the vault @see model/Base
+   * @throws error in case the login fails
    */
   async unlock (vaultAuthProvider) {
     this.lock()
@@ -55,6 +50,12 @@ class Vault extends EventEmitter {
     this._docCipher = _createDocCipher({ _this: this, privateKey, publicKey })
   }
 
+  /**
+   * Updates the vault auth provider user to access the vault
+   * ex. this can be used to update the user password
+   * @param {Object} oldVaultAuthProvider the current vault auth provider
+   * @param {Object} newVaultAuthProvider the new vault auth provider
+   */
   async updateVaultAuthProvider (oldVaultAuthProvider, newVaultAuthProvider) {
     if (!oldVaultAuthProvider.isSameUser(newVaultAuthProvider)) {
       throw new Error('old and new providers do not refer to the same user')
@@ -76,35 +77,21 @@ class Vault extends EventEmitter {
     this.lock()
   }
 
-  async recoverVault ({
-    ssoProvider,
-    ssoUserId,
-    newPassword,
-    privateKey
-  }) {
-    await this._updatePassword({
-      ssoProvider,
-      ssoUserId,
-      newPassword,
-      privateKey
-    })
-  }
-
   /**
    * Checks whether the user has a vault
-   * if the user has logged in using a polkadot wallet the signer must be provided,
-   * if the user has logged in using single sign on the ssoProvider and ssoUserId must be provided
    *
-   * @param {Keyring} [signer] the substrate account related signer
-   * @param {String} [ssoProvider] the single sign on user id required if using sso
-   * @param {String} [ssoUserId] the single sign on user id required if using sso
+   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * enables the ciphering/deciphering of the vault @see model/BaseVaultAuthProvider
    *
-   * @returns
+   * @returns {boolean} whether the user already has a vault
    */
   async hasVault (vaultAuthProvider) {
     return this._hasVault(_generateUserId(vaultAuthProvider))
   }
 
+  /**
+   * Locks the vault
+   */
   lock () {
     if (!this.isUnlocked()) {
       return
@@ -116,30 +103,65 @@ class Vault extends EventEmitter {
     // localStorage.removeItem(LocalStorageKey.VAULT_CONTEXT)
   }
 
+  /**
+   * Indicates whether the vault is locked
+   * @returns {boolean} whether the vault is locked
+   */
   isUnlocked () {
     return !!this._wallet
   }
 
+  /**
+   * Asserts that the vault is unlocked
+   * @throws {Error} if the vault is locked
+   */
   assertIsUnlocked () {
     if (!this.isUnlocked()) {
       throw new Error('The vault is locked')
     }
   }
 
+  /**
+   * Asserts that the user has a vault
+   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * enables the ciphering/deciphering of the vault @see model/BaseVaultAuthProvider
+   * @throws {Error} if the vault is locked
+   */
   async assertHasVault (vaultAuthProvider) {
     if (!await this.hasVault(vaultAuthProvider)) {
       throw new Error('The user does not have a vault')
     }
   }
 
+  /**
+   * Returns the vault wallet that enables the calling of txs and signing
+   * as the vault user
+   * @returns {VaultWallet} @see models/wallet/VaultWallet
+   * @throws {Error} if the vault is locked
+   */
   getWallet () {
     this.assertIsUnlocked()
     return this._wallet
   }
 
+  /**
+   * Returns the document cipher that enables the ciphering/deciphering of docs
+   * @returns {VaultWallet} @see models/wallet/VaultWallet
+   * @throws {Error} if the vault is locked
+   */
   getDocCipher () {
     this.assertIsUnlocked()
     return this._docCipher
+  }
+
+  /**
+   * Returns the address of the vault user
+   * @returns {string} users address
+   * @throws {Error} if the vault is locked
+   */
+  getAddress () {
+    this.assertIsUnlocked()
+    return this._wallet.getAddress()
   }
 
   async _createVault (userId, vaultAuthProvider) {
@@ -204,11 +226,6 @@ class Vault extends EventEmitter {
     return this._confidentialDocsApi.findVault(userId)
   }
 
-  getAddress () {
-    this.assertIsUnlocked()
-    return this._wallet.getAddress()
-  }
-
   // _getContext () {
   //   this.assertIsUnlocked()
   //   return this._loadContext()
@@ -223,10 +240,6 @@ class Vault extends EventEmitter {
 }
 
 module.exports = Vault
-
-function _getAddress (signer) {
-  return Polkadot.getAddress(signer)
-}
 
 function _generateUserId (vaultAuthProvider) {
   return blake2AsHex(vaultAuthProvider.getUserIdBase())
@@ -329,152 +342,16 @@ function _createDocCipher ({
 }
 
 function _createWallet ({
-  _this,
+  vault,
   signer
 }) {
-  _this.once('lock', () => {
-    signer = null
+  return new VaultWallet({
+    vault,
+    signer
   })
-  return {
-    async callTx ({
-      polkadot,
-      palletName,
-      extrinsicName,
-      params,
-      txResponseHandler,
-      sudo = false
-    }) {
-      this.assertIsUnlocked()
-
-      return new Promise((resolve, reject) => {
-        const onConfirm = async () => {
-          try {
-            const result = await _callTx({
-              _this: this,
-              polkadot,
-              palletName,
-              extrinsicName,
-              signer,
-              params,
-              txResponseHandler,
-              sudo
-            })
-            resolve(result)
-          } catch (error) {
-            reject(error)
-          }
-        }
-        const onCancel = (reason) => {
-          reject(new Error(reason))
-        }
-        _this._actionConfirmer.confirm({
-          palletName,
-          extrinsicName,
-          params,
-          address: this.getAddress()
-        },
-        onConfirm,
-        onCancel
-        )
-      })
-    },
-    async sign ({ polkadot, payload }) {
-      this.assertIsUnlocked()
-      return new Promise((resolve, reject) => {
-        const onConfirm = async () => {
-          try {
-            const result = await _sign({
-              _this: this,
-              polkadot,
-              payload,
-              signer
-            })
-            resolve(result)
-          } catch (error) {
-            reject(error)
-          }
-        }
-        const onCancel = (reason) => {
-          reject(new Error(reason))
-        }
-        _this._actionConfirmer.confirm({
-          payload,
-          address: this.getAddress()
-        },
-        onConfirm,
-        onCancel
-        )
-      })
-    },
-    verifySignature ({ payload, signature }) {
-      return signatureVerify(payload, signature, this.getAddress())
-    },
-    getAddress () {
-      this.assertIsUnlocked()
-      return _getAddress(signer)
-    },
-    assertIsUnlocked () {
-      if (!this.isUnlocked()) {
-        throw new Error('Signer is locked')
-      }
-    },
-    isUnlocked () {
-      return !!signer
-    }
-  }
-}
-
-async function _callTx ({
-  _this,
-  polkadot,
-  palletName,
-  extrinsicName,
-  signer,
-  params,
-  txResponseHandler,
-  sudo = false
-}) {
-  _this.assertIsUnlocked()
-  params = params || []
-  // console.log('callTx: ', extrinsicName, signer, params)
-  let finalSigner = signer
-  if (!Polkadot.isKeyringPair(signer)) {
-    finalSigner = _this.getAddress()
-    await polkadot.setWeb3Signer(finalSigner)
-  }
-  // console.log('callTx params', params)
-  let unsub
-  // eslint-disable-next-line no-async-promise-executor
-  return new Promise(async (resolve, reject) => {
-    try {
-      const tx = polkadot.tx()
-      let call = tx[palletName][extrinsicName](...params)
-      if (sudo) {
-        call = tx.sudo.sudo(call)
-      }
-      unsub = await call.signAndSend(finalSigner, (e) => txResponseHandler(e, resolve, reject, unsub))
-    } catch (e) {
-      reject(e)
-    }
-  })
-}
-
-async function _sign ({ _this, polkadot, payload, signer }) {
-  _this.assertIsUnlocked()
-  const data = u8aToHex(u8aWrapBytes(payload))
-  if (Polkadot.isKeyringPair(signer)) {
-    return u8aToHex(signer.sign(data))
-  } else {
-    const injector = await polkadot._getInjector(signer)
-    return injector.signer.signRaw({
-      address: signer,
-      data,
-      type: 'bytes'
-    }).signature
-  }
 }
 
 function _configureWallet (_this, signer) {
-  _this._wallet = _createWallet({ _this, signer })
+  _this._wallet = _createWallet({ vault: _this, signer })
   _this._polkadot.setWallet(_this._wallet)
 }

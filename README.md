@@ -6,31 +6,32 @@ To install the hashed private client api run the following command:
 
 `npm i --save @smontero/hashed-confidential-docs`
 
-Access to most of the functionality is done through the HashedConfidentailDocs object which enables its configuration and provides access to the dfferent API objects:
+Access to most of the functionality is done through the HashedConfidentailDocs object which enables its configuration and provides access to the different API objects:
 
 `import { HashedConfidentialDocs } from '@smontero/hashed-confidential-docs'`
 
 
 
 A new instance of the [HashedConfidentialDocs](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/HashedConfidentialDocs.js#L7) class has to be created passing in the 
-ipfs url, hashed chain endpoint, appName and a faucet instance:
+ipfs url, ipfs auth header, polkadot service class instance and a faucet instance:
 
 ```
 const hcd = new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
-    chainURI: 'ws://127.0.0.1:9944',
-    appName: 'Confidential Docs',
+    ipfsAuthHeader: `Basic ${Buffer.from(`${process.env.IPFS_PROJECT_ID}:${process.env.IPFS_PROJECT_SECRET}`).toString('base64')}`,
+    polkadot,
     faucet
-})
+  })
 ```
 
-Then the user has to be logged in to hashed confidential docs:
+Then the user has to be logged in to hashed confidential docs, to login the user a VaultAuthProvider is required, the VaultAuthProvider used depends on how the user is login in to the system ex. username/password, google sign in or a native wallet, the current auth providers are:
 
-`await hcd.login({
-      ssoProvider: 'google',
-      ssoUserId: 'ssoUserId',
-      password: 'password'
-    })`
+- PasswordVaultAuthProvider: for a user login in using username/password
+- GoogleVaultAuthProvider: for a user login in google sign in
+
+`await hcd.login(vaultAuthProvider)`
+
+**Its important to note that the polkadot service class instance passed in to the hashed confidential docs will be configured with a VaultWallet when the user is logged in that will enable this instance to be used to call extrinsics and sign on behalf of the user.**
 
 Once logged in the services provided by the [OwnedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L5) and [SharedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L7) objects can be accessed.  
 

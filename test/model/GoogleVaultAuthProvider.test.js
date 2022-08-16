@@ -5,7 +5,7 @@ jest.setTimeout(20000)
 global.window = { addEventListener () {} }
 // global.document = {}
 global.File = class {}
-const { GoogleVaultAuthProvider } = require('../../src/model')
+const { GoogleVaultAuthProvider } = require('../../src/model/auth-providers')
 
 const key1 = '0xb059db0c5ac255bc8b2ba0679502f7b343cbdccf55f5c82642f9976557146461'
 const key2 = '0x5284d018ab72746166db4528dd24b4dcde01ab00e6efbd922f0d9e9838e8d80f'

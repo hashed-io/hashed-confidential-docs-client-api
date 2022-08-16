@@ -1,72 +1,16 @@
 const { decodeAddress, encodeAddress } = require('@polkadot/keyring')
-const { isHex, hexToU8a, u8aToHex, u8aWrapBytes } = require('@polkadot/util')
-const { signatureVerify } = require('@polkadot/util-crypto')
+const { isHex, hexToU8a } = require('@polkadot/util')
 const { ApiPromise, WsProvider } = require('@polkadot/api')
 const {
   web3Accounts,
   web3Enable,
   web3FromAddress
 } = require('@polkadot/extension-dapp')
+const { ExternalSignerWallet } = require('../model/wallet')
 
-const defualtWallet = {
-  async callTx ({
-    polkadot,
-    palletName,
-    extrinsicName,
-    params,
-    signer,
-    txResponseHandler,
-    sudo = false
-  }) {
-    params = params || []
-    // console.log('callTx: ', extrinsicName, signer, params)
-    let finalSigner = signer
-    if (!Polkadot.isKeyringPair(signer)) {
-      finalSigner = this.getAddress()
-      await polkadot.setWeb3Signer(finalSigner)
-    }
-    // console.log('callTx params', params)
-    let unsub
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      try {
-        const tx = polkadot.tx()
-        let call = tx[palletName][extrinsicName](...params)
-        if (sudo) {
-          call = tx.sudo.sudo(call)
-        }
-        unsub = await call.signAndSend(finalSigner, (e) => txResponseHandler(e, resolve, reject, unsub))
-      } catch (e) {
-        reject(e)
-      }
-    })
-  },
-  async sign ({ polkadot, payload, signer }) {
-    const data = u8aToHex(u8aWrapBytes(payload))
-    if (Polkadot.isKeyringPair(signer)) {
-      return u8aToHex(signer.sign(data))
-    } else {
-      const injector = await polkadot._getInjector(signer)
-      return injector.signer.signRaw({
-        address: signer,
-        data,
-        type: 'bytes'
-      }).signature
-    }
-  },
-  verifySignature ({ message, signature, signer }) {
-    return signatureVerify(message, signature, signer)
-  }
-}
+const defualtWallet = new ExternalSignerWallet()
+
 class Polkadot {
-  static isKeyringPair (signer) {
-    return signer.sign && signer.lock
-  }
-
-  static getAddress (signer) {
-    return signer.address || signer
-  }
-
   constructor ({
     wss = null,
     appName,
@@ -79,6 +23,11 @@ class Polkadot {
     this._api = api
   }
 
+  /**
+   * @name setWallet
+   * @description Configures the wallet to be used
+   * @param {Object} wallet the wallet to be use the handle calling txs and signing
+   */
   setWallet (wallet) {
     wallet = wallet || defualtWallet
     this._wallet = wallet
@@ -113,6 +62,18 @@ class Polkadot {
     }
   }
 
+  /**
+   * @name callTx
+   * @description Calls the extrinsic specified by the parameters
+   * @param {String} palletName name of the pallet
+   * @param {String} extrinsicName Name of the extrinsic
+   * @param {Array} params Array with the extrinsic parameters
+   * @param {function} txResponseHandler The function that will handle the tx reponse
+   * @param {String|KeyPair} [signer] The signer of the tx, the parameter is optional,
+   * it depends on the configured wallet if the parameter is required or not
+   * @param {boolean} sudo Whether the call should be done as sudo
+   * @returns tx response from polkadot api
+   */
   async callTx ({
     palletName,
     extrinsicName,
@@ -144,6 +105,11 @@ class Polkadot {
     return !!this._api
   }
 
+  /**
+   * @name chainInfo
+   * @description Returns information of the chain it is connected to
+   * @returns Object
+   */
   async chainInfo () {
     const [chain, nodeName, nodeVersion] = await Promise.all([
       this._api.rpc.system.chain(),

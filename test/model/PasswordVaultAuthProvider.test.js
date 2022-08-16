@@ -5,7 +5,7 @@ jest.setTimeout(20000)
 global.window = { addEventListener () {} }
 // global.document = {}
 global.File = class {}
-const { PasswordVaultAuthProvider } = require('../../src/model')
+const { PasswordVaultAuthProvider } = require('../../src/model/auth-providers')
 
 describe('Test validations', () => {
   test('vault unlock should fail for invalid user details', async () => {

@@ -2,7 +2,7 @@ jest.setTimeout(50000)
 global.window = { addEventListener () {} }
 global.File = class {}
 const { HashedConfidentialDocs } = require('../src')
-const { LocalAccountFaucet } = require('../src/model')
+const { LocalAccountFaucet } = require('../src/model/faucet')
 const { PredefinedActionConfirmer } = require('../src/model/action-confirmer')
 const { BalancesApi, Polkadot } = require('../src/service')
 const Util = require('./support/Util')

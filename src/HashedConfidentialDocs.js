@@ -42,14 +42,8 @@ class HashedConfidentialDocs {
 
   /**
    * @desc Logs in the user to hashed confidential docs
-   * if the user has logged in using a polkadot wallet the signer must be provided,
-   * if the user has logged in using single sign on the ssoProvider, ssoUserId and password must be provided
-   *
-   * @param {Keyring} [signer] the substrate account related signer
-   * @param {String} [ssoProvider] the single sign on user id required if using sso
-   * @param {String} [ssoUserId] the single sign on user id required if using sso
-   * @param {String} [password] the password used to generate the vault cipher key required when
-   * using single sign on
+   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * enables the ciphering/deciphering of the vault @see model/Base
    * @throws error in case the login fails
    */
   async login (vaultAuthProvider) {

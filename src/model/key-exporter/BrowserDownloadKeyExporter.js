@@ -1,5 +1,11 @@
 const BaseKeyExporter = require('./BaseKeyExporter')
+
+// Exports private key by generating a file download in the browser
 class BrowserDownloadKeyExporter extends BaseKeyExporter {
+  /**
+   * Exports  private key
+   * @param {string} privateKey
+   */
   async export (key) {
     const file = new File([key], `private-key-${Date.now()}.txt`, {
       type: 'text/plain'

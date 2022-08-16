@@ -2,7 +2,7 @@ const find = require('find-process')
 const sleep = require('await-sleep')
 const { spawn } = require('node:child_process')
 const { Keyring } = require('@polkadot/keyring')
-const { PasswordVaultAuthProvider } = require('../../src/model')
+const { PasswordVaultAuthProvider } = require('../../src/model/auth-providers')
 const { IPFS, Polkadot } = require('../../src/service')
 
 class Util {
