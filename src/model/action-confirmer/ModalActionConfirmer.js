@@ -128,10 +128,10 @@ class ModalActionConfirmer extends BaseActionConfirmer {
 function getStyles() {
     return `
     <styles>
-    .mac-modal {
+    .hcd-modal {
       display: block !important;
       position: fixed;
-      z-index: 1;
+      z-index: 10000;
       left: 0;
       top: 0;
       width: 100%;
@@ -141,7 +141,7 @@ function getStyles() {
       background-color: rgba(0, 0, 0, 0.4);
     }
   
-    .mac-modal-body {
+    .hcd-modal-body {
       background-color: #fefefe;
       margin: 15% auto;
       padding: 20px;
@@ -150,14 +150,14 @@ function getStyles() {
       border-radius: 10px;
     }
   
-    .mac-modal-content {
+    .hcd-modal-content {
       padding: 10px;
       background-color: #f7e8d9; */
       /* background-color: #e95a30; */
       margin-bottom: 20px;
     }
   
-    .mac-modal-footer {
+    .hcd-modal-footer {
       display: flex;
       padding-left: 5%;
       padding-right: 5%;
