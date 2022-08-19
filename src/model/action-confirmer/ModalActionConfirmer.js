@@ -44,7 +44,6 @@ class ModalActionConfirmer extends BaseActionConfirmer {
             const elements = d.getElementsByClassName('hcd-modal');
             if (!elements.length) {
                 d.body.insertAdjacentHTML('beforeend', modalHtml);
-                d.body.insert
             }
             this._modal = elements[0];
             this._content = this._getModalElement('hcd-modal-content');
