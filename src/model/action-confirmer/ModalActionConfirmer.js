@@ -26,7 +26,6 @@ class ModalActionConfirmer extends BaseActionConfirmer {
     this._content = null
     this._cancelBtn = null
     this._confirmBtn = null
-    // this._addModalStyles()
   }
 
   confirm (details, onConfirm, onCancel) {
@@ -50,7 +49,6 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       this._cancelBtn = this._getModalElement('hcd-modal-cancel-btn')
       this._confirmBtn = this._getModalElement('hcd-modal-confirm-btn')
     }
-    // this._content.innerHTML = content;
     this._content.innerHTML = this._renderConfirmationDetails(content)
     this._cancelBtn.onclick = () => {
       this._hide()
@@ -126,12 +124,6 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       </div>
       `
   }
-
-  _addModalStyles () {
-    const styles = window.document.createElement('STYLE')
-    styles.appendChild(getStyles())
-    window.document.head.appendChild(styles)
-  }
 }
 
 function getStyles () {
@@ -160,7 +152,7 @@ function getStyles () {
       padding: 20px;
       border: 1px solid #888;
       width: 60%;
-      height: 60%;
+      height: fit-content;
       border-radius: 10px;
     }
   
@@ -220,6 +212,8 @@ function getStyles () {
   
     .hcd-content-params-container {
       margin-bottom: 10px;
+      max-width: 100%;
+      overflow: auto;
     }
   
     .hcd-content-params-viewer {
@@ -233,6 +227,18 @@ function getStyles () {
     .hcd-modal-title-header {
       font-size: 24px;
       font-weight: bold;
+    }
+
+    @media only screen and (max-width: 700px) {
+      .hcd-modal-body {
+        width: 90%
+      }
+    }
+  
+    @media only screen and (min-width: 1200px) {
+      .hcd-modal-body {
+        width: 40%
+      }
     }
   `
 }
