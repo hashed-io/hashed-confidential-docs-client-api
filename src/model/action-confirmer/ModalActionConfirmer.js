@@ -1,4 +1,4 @@
-const BaseActionConfirmer = require('./BaseActionConfirmer');
+const BaseActionConfirmer = require('./BaseActionConfirmer')
 
 const modalHtml = `
 <div class="hcd-modal" id="hcdModalContainer">
@@ -17,77 +17,77 @@ const modalHtml = `
 <style>
   ${getStyles()}
 </style>
-`;
+`
 
 class ModalActionConfirmer extends BaseActionConfirmer {
-    constructor() {
-        super();
-        this._modal = null;
-        this._content = null;
-        this._cancelBtn = null;
-        this._confirmBtn = null;
-        this._addModalStyles()
-    }
+  constructor () {
+    super()
+    this._modal = null
+    this._content = null
+    this._cancelBtn = null
+    this._confirmBtn = null
+    // this._addModalStyles()
+  }
 
-    confirm(details, onConfirm, onCancel) {
-        this._showModal(
-            // `<p>${JSON.stringify(details, null, 4)}</p>`,
-            details,
-            onConfirm,
-            onCancel
-        );
-    }
+  confirm (details, onConfirm, onCancel) {
+    this._showModal(
+      // `<p>${JSON.stringify(details, null, 4)}</p>`,
+      details,
+      onConfirm,
+      onCancel
+    )
+  }
 
-    _showModal(content, onConfirm, onCancel) {
-        const d = window.document;
-        if (!this._modal) {
-            const elements = d.getElementsByClassName('hcd-modal');
-            if (!elements.length) {
-                d.body.insertAdjacentHTML('beforeend', modalHtml);
-            }
-            this._modal = elements[0];
-            this._content = this._getModalElement('hcd-modal-content');
-            this._cancelBtn = this._getModalElement('hcd-modal-cancel-btn');
-            this._confirmBtn = this._getModalElement('hcd-modal-confirm-btn');
-        }
-        // this._content.innerHTML = content;
-        this._content.innerHTML = this._renderConfirmationDetails(content);
-        this._cancelBtn.onclick = () => {
-            this._hide();
-            onCancel('User cancelled action');
-        };
-        this._confirmBtn.onclick = () => {
-            this._hide();
-            onConfirm();
-        };
-        this._display();
+  _showModal (content, onConfirm, onCancel) {
+    const d = window.document
+    if (!this._modal) {
+      const elements = d.getElementsByClassName('hcd-modal')
+      if (!elements.length) {
+        d.body.insertAdjacentHTML('beforeend', modalHtml)
+      }
+      this._modal = elements[0]
+      this._content = this._getModalElement('hcd-modal-content')
+      this._cancelBtn = this._getModalElement('hcd-modal-cancel-btn')
+      this._confirmBtn = this._getModalElement('hcd-modal-confirm-btn')
     }
-
-    _getModalElement(className) {
-        return this._modal.getElementsByClassName(className)[0];
+    // this._content.innerHTML = content;
+    this._content.innerHTML = this._renderConfirmationDetails(content)
+    this._cancelBtn.onclick = () => {
+      this._hide()
+      onCancel('User cancelled action')
     }
-
-    _hide() {
-        this._modal.style.display = 'none';
+    this._confirmBtn.onclick = () => {
+      this._hide()
+      onConfirm()
     }
+    this._display()
+  }
 
-    _display() {
-        this._modal.style.display = 'block';
-    }
+  _getModalElement (className) {
+    return this._modal.getElementsByClassName(className)[0]
+  }
 
-    _renderConfirmationDetails(content) {
-      const {
-        palletName,
-        extrinsicName,
-        params,
-        address,
-        payload
-      } = content
-      const isSigningMessage = !!payload
-      const modalTitle = this._getModalElement('hcd-modal-title-header');
-      if (isSigningMessage) {
-        modalTitle.innerHTML = 'Sign message'
-        return `
+  _hide () {
+    this._modal.style.display = 'none'
+  }
+
+  _display () {
+    this._modal.style.display = 'block'
+  }
+
+  _renderConfirmationDetails (content) {
+    const {
+      palletName,
+      extrinsicName,
+      params,
+      address,
+      payload
+    } = content
+    const isSigningMessage = !!payload
+    const modalTitle = this._getModalElement('hcd-modal-title-header')
+    if (isSigningMessage) {
+      modalTitle.innerHTML = 'Sign message'
+      return `
           <div>
             <div class="hcd-content-params-container">
                 <p class="hcd-label-name">Address:</p>
@@ -96,14 +96,14 @@ class ModalActionConfirmer extends BaseActionConfirmer {
             <div class="hcd-content-params-container">
                 <p class="hcd-label-name">Payload:</p>
                 <div class="hcd-content-params-viewer">
-                    <p class="hcd-label-value">${JSON.stringify(payload, undefined, "\t")}</p>
+                    <p class="hcd-label-value">${JSON.stringify(payload, undefined, '\t')}</p>
                 </div>
             </div>
         </div>
         `
-      }
-      modalTitle.innerHTML = 'Confirm action'
-      return `
+    }
+    modalTitle.innerHTML = 'Confirm action'
+    return `
       <div>
           <div class="hcd-content-params-container">
               <p class="hcd-label-name">Address:</p>
@@ -120,22 +120,22 @@ class ModalActionConfirmer extends BaseActionConfirmer {
           <div class="hcd-content-params-container">
               <p class="hcd-label-name">Params:</p>
               <div class="hcd-content-params-viewer">
-                  <p class="hcd-label-value">${JSON.stringify(params, undefined, "\t")}</p>
+                  <p class="hcd-label-value">${JSON.stringify(params, undefined, '\t')}</p>
               </div>
           </div>
       </div>
       `
-    }
+  }
 
-    _addModalStyles() {
-      var styles = window.document.createElement("STYLE");
-      styles.appendChild(getStyles());
-      window.document.head.appendChild(styles);
-    }
+  _addModalStyles () {
+    const styles = window.document.createElement('STYLE')
+    styles.appendChild(getStyles())
+    window.document.head.appendChild(styles)
+  }
 }
 
-function getStyles() {
-    return `
+function getStyles () {
+  return `
     .hcd-modal {
       display: none;
       position: fixed;
@@ -234,7 +234,7 @@ function getStyles() {
       font-size: 24px;
       font-weight: bold;
     }
-  `;
+  `
 }
 
-module.exports = ModalActionConfirmer;
+module.exports = ModalActionConfirmer
