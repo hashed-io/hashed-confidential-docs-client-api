@@ -4,7 +4,7 @@ const modalHtml = `
 <div class="hcd-modal" id="hcdModalContainer">
   <div class="hcd-modal-body" id="hcdModalBody""">
     <div class="hcd-modal-header">
-      <h2 class="hcd-modal-title-header">Title</h2>
+      <p class="hcd-modal-title-header">Title</p>
     </div>
     <div id="hcdModalContent" class="hcd-modal-content">
     </div>
@@ -14,7 +14,9 @@ const modalHtml = `
     </div>
   </div>
 </div>
-${getStyles()}
+<style>
+  ${getStyles()}
+</style>
 `;
 
 class ModalActionConfirmer extends BaseActionConfirmer {
@@ -24,6 +26,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
         this._content = null;
         this._cancelBtn = null;
         this._confirmBtn = null;
+        this._addModalStyles()
     }
 
     confirm(details, onConfirm, onCancel) {
@@ -41,6 +44,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
             const elements = d.getElementsByClassName('hcd-modal');
             if (!elements.length) {
                 d.body.insertAdjacentHTML('beforeend', modalHtml);
+                d.body.insert
             }
             this._modal = elements[0];
             this._content = this._getModalElement('hcd-modal-content');
@@ -123,37 +127,47 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       </div>
       `
     }
+
+    _addModalStyles() {
+      var styles = window.document.createElement("STYLE");
+      styles.appendChild(getStyles());
+      window.document.head.appendChild(styles);
+    }
 }
 
 function getStyles() {
     return `
-    <styles>
     .hcd-modal {
-      display: block !important;
+      display: none;
       position: fixed;
       z-index: 10000;
       left: 0;
       top: 0;
       width: 100%;
-      height: 100%;
+      height: 100vh;
       overflow: auto;
       background-color: rgb(0, 0, 0);
       background-color: rgba(0, 0, 0, 0.4);
     }
   
     .hcd-modal-body {
+      position: absolute;
       background-color: #fefefe;
-      margin: 15% auto;
+      margin: auto;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
       padding: 20px;
       border: 1px solid #888;
       width: 60%;
+      height: 60%;
       border-radius: 10px;
     }
   
     .hcd-modal-content {
       padding: 10px;
-      background-color: #f7e8d9; */
-      /* background-color: #e95a30; */
+      background-color: #f7e8d9;
       margin-bottom: 20px;
     }
   
@@ -207,7 +221,6 @@ function getStyles() {
   
     .hcd-content-params-container {
       margin-bottom: 10px;
-      /* background-color: #f7e8d9; */
     }
   
     .hcd-content-params-viewer {
@@ -217,7 +230,11 @@ function getStyles() {
       padding: 10px;
       border-radius: 10px;
     }
-    </styles>
+
+    .hcd-modal-title-header {
+      font-size: 24px;
+      font-weight: bold;
+    }
   `;
 }
 
