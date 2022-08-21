@@ -95,7 +95,15 @@ function _create ({ vault, signer }) {
           vault._actionConfirmer.confirm({
             palletName,
             extrinsicName,
-            params,
+            params: polkadot.addParamMetadata({
+              palletName,
+              extrinsicName,
+              params
+            }),
+            docs: polkadot.extrinsicDocs({
+              palletName,
+              extrinsicName
+            }),
             address: this.getAddress()
           },
           onConfirm,

@@ -105,6 +105,38 @@ class Polkadot {
     return !!this._api
   }
 
+  extrinsicDocs ({
+    palletName,
+    extrinsicName
+  }) {
+    return this.extrinsicMetadata({
+      palletName,
+      extrinsicName
+    }).docs.toHuman()
+  }
+
+  extrinsicMetadata ({
+    palletName,
+    extrinsicName
+  }) {
+    return this.tx()[palletName][extrinsicName].meta
+  }
+
+  addParamMetadata ({
+    palletName,
+    extrinsicName,
+    params
+  }) {
+    const args = this.extrinsicMetadata({
+      palletName,
+      extrinsicName
+    }).args
+    if (params.length !== args.length) {
+      throw new Error(`Invalid extrinsic params array, number of parameters does not match the number of parameters the extrinsic: ${palletName}:${extrinsicName} receives, found: ${params.length} actual: ${args.length}`)
+    }
+    return params.map((value, i) => ({ name: args[i].name.toHuman(), value }))
+  }
+
   /**
    * @name chainInfo
    * @description Returns information of the chain it is connected to
