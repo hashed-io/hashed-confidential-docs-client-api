@@ -16,10 +16,10 @@ class PredefinedActionConfirmer extends BaseActionConfirmer {
 
   confirm (details, onConfirm, onCancel) {
     if (this._cancelReason) {
-      console.log('Canceling action: ', details)
+      console.log('Canceling action: ', JSON.stringify(details, null, 4))
       onCancel(this._cancelReason)
     } else {
-      console.log('Confirming action: ', details)
+      console.log('Confirming action: ', JSON.stringify(details, null, 4))
       onConfirm()
     }
   }
