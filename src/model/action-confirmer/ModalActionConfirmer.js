@@ -17,6 +17,7 @@ const modalHtml = `
 <style>
   ${getStyles()}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 `
 
 class ModalActionConfirmer extends BaseActionConfirmer {
@@ -79,10 +80,14 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       extrinsicName,
       params,
       address,
-      payload
+      payload,
+      docs
     } = content
     const isSigningMessage = !!payload
     const modalTitle = this._getModalElement('hcd-modal-title-header')
+    const paramsHtml = this._renderParams(params)
+    const docsHtml = this._renderDocs(docs)
+
     if (isSigningMessage) {
       modalTitle.innerHTML = 'Sign message'
       return `
@@ -94,7 +99,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
             <div class="hcd-content-params-container">
                 <p class="hcd-label-name">Payload:</p>
                 <div class="hcd-content-params-viewer">
-                    <p class="hcd-label-value">${JSON.stringify(payload, undefined, '\t')}</p>
+                    ${paramsHtml}
                 </div>
             </div>
         </div>
@@ -108,7 +113,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
               <p class="hcd-label-value">${address}</p>
           </div>
           <div class="hcd-content-params-container">
-              <p class="hcd-label-name">Pallete:</p>
+              <p class="hcd-label-name">Pallet:</p>
               <p class="hcd-label-value">${palletName}</p>
           </div>
           <div class="hcd-content-params-container">
@@ -118,11 +123,50 @@ class ModalActionConfirmer extends BaseActionConfirmer {
           <div class="hcd-content-params-container">
               <p class="hcd-label-name">Params:</p>
               <div class="hcd-content-params-viewer">
-                  <p class="hcd-label-value">${JSON.stringify(params, undefined, '\t')}</p>
+                  ${paramsHtml}
+              </div>
+          </div>
+          <div class="hcd-content-params-container">
+              <p class="hcd-label-toggle" onclick="_toggleDocs()">See Docs</p>
+              <div class="hcd-content-docs-viewer">
+                  ${docsHtml}
               </div>
           </div>
       </div>
       `
+  }
+
+  _renderParams(params) {
+    if(params.length <= 0) return ''
+    let html = ''
+    params.forEach(param => {
+      html += `<p class="hcd-label-name" style="text-decoration: underline !important; color: black !important">${param.name}</p>
+        <p class="hcd-label-value" style="margin-bottom: 10px !important">${param.value}</p>`
+    });
+    return html
+  }
+
+  _renderDocs(docs) {
+    const converter = new showdown.Converter();
+    if(docs.length <= 0) return ''
+    let html = ''
+    docs.forEach(async doc => {
+      html += converter.makeHtml(doc)
+    });
+    return html
+  }
+
+  _toggleDocs() {
+    const docsContainer = window.document.getElementsByClassName('hcd-content-docs-viewer')[0]
+    const toggleLabel = window.document.getElementsByClassName('hcd-label-toggle')[0]
+    const currentState = docsContainer.style.display
+    if (currentState === 'block') {
+      docsContainer.style.display = 'none'
+      toggleLabel.innerHTML = 'See Docs'
+    } else {
+      docsContainer.style.display = 'block'
+      toggleLabel.innerHTML = 'Hide Docs'
+    }
   }
 }
 
@@ -161,13 +205,13 @@ function getStyles () {
       background-color: #f7e8d9;
       margin-bottom: 20px;
     }
-  
+
     .hcd-modal-footer {
       display: flex;
       padding-left: 5%;
       padding-right: 5%;
     }
-  
+
     .hcd-modal-cancel-btn {
       background-color: red;
       padding: 15px;
@@ -179,7 +223,7 @@ function getStyles () {
       margin-right: 2%;
       margin-left: 5%;
     }
-  
+
     .hcd-modal-confirm-btn {
       background-color: green;
       padding: 15px;
@@ -191,12 +235,12 @@ function getStyles () {
       margin-right: 5%;
       margin-left: 2%;
     }
-  
+
     .hcd-modal-btn:hover {
       opacity: 0.8;
       cursor: pointer;
     }
-  
+
     .hcd-label-name {
       font-size: 16px;
       margin: 0px !important;
@@ -204,19 +248,29 @@ function getStyles () {
       font-weight: bold;
       color: #888;
     }
-  
+
     .hcd-label-value {
       font-size: 18px;
       margin: 0px !important;
     }
-  
+
     .hcd-content-params-container {
       margin-bottom: 10px;
       max-width: 100%;
       overflow: auto;
+      /* background-color: #f7e8d9; */
     }
-  
+
     .hcd-content-params-viewer {
+      overflow: auto;
+      max-height: 150px;
+      background-color: rgb(183, 178, 178);
+      padding: 10px;
+      border-radius: 10px;
+    }
+    
+    .hcd-content-docs-viewer {
+      display: none;
       overflow: auto;
       max-height: 150px;
       background-color: rgb(183, 178, 178);
@@ -227,6 +281,16 @@ function getStyles () {
     .hcd-modal-title-header {
       font-size: 24px;
       font-weight: bold;
+    }
+
+    .hcd-label-toggle {
+      font-size: 16px;
+      margin: 0px !important;
+      margin: none !important;
+      font-weight: bold;
+      color: #888;
+      text-decoration: underline;
+      cursor: pointer;
     }
 
     @media only screen and (max-width: 700px) {
