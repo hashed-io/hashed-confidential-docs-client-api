@@ -40,6 +40,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
 
   _showModal (content, onConfirm, onCancel) {
     const d = window.document
+    window._hcdToggleDocs = this._toggleDocs
     if (!this._modal) {
       const elements = d.getElementsByClassName('hcd-modal')
       if (!elements.length) {
@@ -128,7 +129,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
               </div>
           </div>
           <div class="hcd-content-params-container">
-              <p class="hcd-label-toggle" onclick="this._toggleDocs()">See Docs</p>
+              <p class="hcd-label-toggle" onclick="_hcdToggleDocs()">See Docs</p>
               <div class="hcd-content-docs-viewer">
                   ${docsHtml}
               </div>
@@ -142,7 +143,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
     let html = ''
     params.forEach(param => {
       html += `<p class="hcd-label-name" style="text-decoration: underline !important; color: black !important">${param.name}</p>
-        <p class="hcd-label-value" style="margin-bottom: 10px !important">${param.value}</p>`
+        <p class="hcd-label-value" style="margin-bottom: 10px !important">${JSON.stringify(param.value)}</p>`
     });
     return html
   }
