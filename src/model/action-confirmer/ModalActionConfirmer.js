@@ -87,7 +87,8 @@ class ModalActionConfirmer extends BaseActionConfirmer {
     const modalTitle = this._getModalElement('hcd-modal-title-header')
     const paramsHtml = this._renderParams(params)
     const docsHtml = this._renderDocs(docs)
-
+    console.log('docs', docs, docsHtml)
+    console.log('params', params, paramsHtml)
     if (isSigningMessage) {
       modalTitle.innerHTML = 'Sign message'
       return `
@@ -127,7 +128,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
               </div>
           </div>
           <div class="hcd-content-params-container">
-              <p class="hcd-label-toggle" onclick="_toggleDocs()">See Docs</p>
+              <p class="hcd-label-toggle" onclick="this._toggleDocs()">See Docs</p>
               <div class="hcd-content-docs-viewer">
                   ${docsHtml}
               </div>
