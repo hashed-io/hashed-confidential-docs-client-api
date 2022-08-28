@@ -27,8 +27,14 @@
     "jest-localstorage-mock": "^2.4.21"
   },
   "dependencies": {
-    "@polkadot/api": "^8.1.1",
-    "@polkadot/extension-dapp": "^0.43.1",
+    "@polkadot/api": "8.1.1",
+    "@polkadot/extension-dapp": "file:../polkadot-extension/packages/extension-dapp/build",
+    "@polkadot/keyring": "file:../polkadot-js-common-laurenttrk/packages/keyring/build",
+    "@polkadot/util": "8.2.3-0",
+    "@polkadot/util-crypto": "file:../polkadot-js-common-laurenttrk/packages/util-crypto/build",
+    "@polkadot/wasm-crypto-asmjs": "6.3.1",
+    "@polkadot/wasm-crypto-wasm": "6.3.1",
+    "@polkadot/x-randomvalues": "8.2.3-0",
     "@smontero/generated-key-cipher-providers": "0.0.6",
     "@smontero/hashed-crypto": "^0.0.8",
     "ipfs-http-client": "^55.0.0",
