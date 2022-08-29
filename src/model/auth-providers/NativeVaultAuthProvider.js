@@ -54,6 +54,18 @@ class NativeVaultAuthProvider extends BaseVaultAuthProvider {
     return JSON.parse(hexToString(decrypted))
   }
 
+  /**
+   * This method should be overridden by "native" VaultAuthProviders such as one
+   * using the polkadot wallet, and it should return the singer obj or address of
+   * the logged in user, so that a new singer is not created for the user when creating
+   * the vault
+   *
+   * @returns {Signer|string} signer object or address to be use for signing transactions
+   */
+  getSigner () {
+    return this._accountMetadata.address
+  }
+
   getPublicKey (address) {
     const pubKey = decodeAddress(address)
     return u8aToHex(pubKey)
