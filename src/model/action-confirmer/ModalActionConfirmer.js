@@ -86,10 +86,6 @@ class ModalActionConfirmer extends BaseActionConfirmer {
     } = content
     const isSigningMessage = !!payload
     const modalTitle = this._getModalElement('hcd-modal-title-header')
-    const paramsHtml = this._renderParams(params)
-    const docsHtml = this._renderDocs(docs)
-    console.log('docs', docs, docsHtml)
-    console.log('params', params, paramsHtml)
     if (isSigningMessage) {
       modalTitle.innerHTML = 'Sign message'
       return `
@@ -101,12 +97,16 @@ class ModalActionConfirmer extends BaseActionConfirmer {
             <div class="hcd-content-params-container">
                 <p class="hcd-label-name">Payload:</p>
                 <div class="hcd-content-params-viewer">
-                    ${paramsHtml}
+                    ${payload}
                 </div>
             </div>
         </div>
         `
     }
+    const paramsHtml = this._renderParams(params)
+    const docsHtml = this._renderDocs(docs)
+    console.log('docs', docs, docsHtml)
+    console.log('params', params, paramsHtml)
     modalTitle.innerHTML = 'Confirm action'
     return `
       <div>
@@ -138,27 +138,27 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       `
   }
 
-  _renderParams(params) {
-    if(params.length <= 0) return ''
+  _renderParams (params) {
+    if (params.length <= 0) return ''
     let html = ''
     params.forEach(param => {
       html += `<p class="hcd-label-name" style="text-decoration: underline !important; color: black !important">${param.name}</p>
         <p class="hcd-label-value" style="margin-bottom: 10px !important">${JSON.stringify(param.value)}</p>`
-    });
+    })
     return html
   }
 
-  _renderDocs(docs) {
-    const converter = new showdown.Converter();
-    if(docs.length <= 0) return ''
+  _renderDocs (docs) {
+    const converter = new showdown.Converter()
+    if (docs.length <= 0) return ''
     let html = ''
     docs.forEach(async doc => {
       html += converter.makeHtml(doc)
-    });
+    })
     return html
   }
 
-  _toggleDocs() {
+  _toggleDocs () {
     const docsContainer = window.document.getElementsByClassName('hcd-content-docs-viewer')[0]
     const toggleLabel = window.document.getElementsByClassName('hcd-label-toggle')[0]
     const currentState = docsContainer.style.display
