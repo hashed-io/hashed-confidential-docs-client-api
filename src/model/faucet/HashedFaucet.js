@@ -8,7 +8,7 @@ class HashedFaucet extends BaseFaucet {
 
   async send ({ authName, address, jwt, signature }) {
     // console.log(`Sending amount: ${this._amount} to address: ${address}`)
-    return fetch(this._url, {
+    const response = await fetch(this._url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -20,6 +20,11 @@ class HashedFaucet extends BaseFaucet {
         signature
       })
     })
+    if (!response.ok) {
+      const data = await response.json()
+      throw new Error((data && data.message) || response.status)
+    }
+    return response
   }
 }
 
