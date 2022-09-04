@@ -20,7 +20,7 @@ class Fetch {
     return this._request(this.url(endpoint), opts)
   }
 
-  async url (endpoint, queryParams) {
+  url (endpoint, queryParams) {
     const url = new URL(endpoint, this.baseUrl)
     if (queryParams) {
       url.search = new URLSearchParams(queryParams)
