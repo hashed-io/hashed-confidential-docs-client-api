@@ -98,7 +98,11 @@ async function createGoogleVaultAuthProvider ({
     faucetServerUrl
   })
 
-  const metadataFile = await _getMetadataFile.call(this, googleDrive, decodedJWT)
+  const metadataFile = await _getMetadataFile.call({
+    createNew,
+    googleDrive,
+    email: decodedJWT.email
+  })
 
   return new GoogleVaultAuthProvider({
     authName,
