@@ -1,20 +1,21 @@
 const { PrivateKeyCipher } = require('@smontero/generated-key-cipher-providers')
 const { Crypto } = require('@smontero/hashed-crypto')
-const BaseVaultAuthProvider = require('./BaseVaultAuthProvider')
+const BaseJWTVaultAuthProvider = require('./BaseJWTVaultAuthProvider')
 
 const METADATA_FILE_NAME = 'hcd.metadata'
 const CURRENT_KEY_NAME = 'currentKey'
 const PENDING_KEY_NAME = 'pendingKey'
 
-// Provides the vault auth provider for a user login in using
+// Provides the vault auth channel for a user login in using
 // sign in with google
-class GoogleVaultAuthProvider extends BaseVaultAuthProvider {
+class GoogleVaultAuthProvider extends BaseJWTVaultAuthProvider {
   /**
    * @desc Create a GoogleVaultAuthProvider instance
    *
-   * @param {String} authName the name to identify this auth provider
-   * @param {String} userId the google user id
-   * @param {String} email the users email
+   * @param {String} authName the name to identify this auth channel
+   * @param {String} jwt the JSON Web Token
+   * @param {Object} decodedJWT the decodedJWT
+   * @param {Object} metadataFile the metadata file stored in the users drive
    * @param {boolean} createNew should be used when there is an existing key that wants to be updated
    * @param {Object} googleDrive instance of the google drive service class @see service/GoogleDrive
    *
@@ -22,49 +23,23 @@ class GoogleVaultAuthProvider extends BaseVaultAuthProvider {
    */
   constructor ({
     authName,
-    userId,
-    email,
+    jwt,
+    decodedJWT,
+    metadataFile,
     createNew = false,
     googleDrive
   }) {
     super({
       authName,
-      userId
+      jwt,
+      decodedJWT
     })
     this._createNew = createNew
-    this._email = email
     // this._drive = new GoogleDrive(new Google({ gapi, clientId: googleClientId }))
     this._drive = googleDrive
-    this._cipher = null
-  }
-
-  /**
-   * @desc Initializes this instance, should be called before calling
-   * cipher/decipher methods
-   */
-  async init () {
-    await this._drive.init(this._email)
-    let file = await this._getMetadataFile()
-    if (!file) {
-      if (this._createNew) {
-        throw new Error('There is no current key, the createNew parameter should be used when there is an existing key that wants to be updated')
-      }
-      file = {
-        name: METADATA_FILE_NAME,
-        parents: ['appDataFolder'],
-        appProperties: {}
-      }
-    }
-    const appProperties = file.appProperties
-    if (!file.fileId || (this._createNew && !appProperties[PENDING_KEY_NAME])) {
-      appProperties[PENDING_KEY_NAME] = (new Crypto()).generateKeyPair().privateKey
-      const op = file.fileId ? 'updateFile' : 'createFile'
-      const { id } = await this._drive[op](file)
-      file.fileId = id
-    }
     this._cipher = _createCipher({
       _this: this,
-      file
+      file: metadataFile
     })
   }
 
@@ -97,22 +72,85 @@ class GoogleVaultAuthProvider extends BaseVaultAuthProvider {
   async _exportKey () {
     return this._cipher.exportKey()
   }
-
-  async _getMetadataFile () {
-    const file = await this._drive.getFileByName({
-      name: METADATA_FILE_NAME,
-      fields: 'id, appProperties',
-      spaces: 'appDataFolder'
-    })
-    if (file) {
-      file.fileId = file.id
-      delete file.id
-    }
-    return file
-  }
 }
 
-module.exports = GoogleVaultAuthProvider
+/**
+   * @desc Create a GoogleVaultAuthProvider instance
+   *
+   * @param {String} authName the name to identify this auth channel
+   * @param {String} jwt the JSON Web Token
+   * @param {String} faucetServerUrl the url for the hashed faucet server
+   * @param {boolean} createNew should be used when there is an existing key that wants to be updated
+   * @param {Object} googleDrive instance of the google drive service class @see service/GoogleDrive
+   *
+   * @return {GoogleVaultAuthProvider}
+   */
+async function createGoogleVaultAuthProvider ({
+  authName,
+  jwt,
+  faucetServerUrl,
+  googleDrive,
+  createNew = false
+}) {
+  const decodedJWT = await BaseJWTVaultAuthProvider.verifyJWT({
+    authName,
+    jwt,
+    faucetServerUrl
+  })
+
+  const metadataFile = await _getMetadataFile.call(this, googleDrive, decodedJWT)
+
+  return new GoogleVaultAuthProvider({
+    authName,
+    jwt,
+    decodedJWT,
+    metadataFile,
+    googleDrive,
+    createNew
+  })
+}
+
+module.exports = createGoogleVaultAuthProvider
+
+async function _getMetadataFile ({
+  createNew,
+  googleDrive,
+  email
+}) {
+  await googleDrive.init(email)
+  let file = await _fetchMetadataFile(googleDrive)
+  if (!file) {
+    if (this._createNew) {
+      throw new Error('There is no current key, the createNew parameter should be used when there is an existing key that wants to be updated')
+    }
+    file = {
+      name: METADATA_FILE_NAME,
+      parents: ['appDataFolder'],
+      appProperties: {}
+    }
+  }
+  const appProperties = file.appProperties
+  if (!file.fileId || (createNew && !appProperties[PENDING_KEY_NAME])) {
+    appProperties[PENDING_KEY_NAME] = (new Crypto()).generateKeyPair().privateKey
+    const op = file.fileId ? 'updateFile' : 'createFile'
+    const { id } = await googleDrive[op](file)
+    file.fileId = id
+  }
+  return file
+}
+
+async function _fetchMetadataFile (googleDrive) {
+  const file = await googleDrive.getFileByName({
+    name: METADATA_FILE_NAME,
+    fields: 'id, appProperties',
+    spaces: 'appDataFolder'
+  })
+  if (file) {
+    file.fileId = file.id
+    delete file.id
+  }
+  return file
+}
 
 function _createCipher ({
   _this,

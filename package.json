@@ -1,6 +1,6 @@
 {
   "name": "@smontero/hashed-confidential-docs",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "Client API that handles in browser encryption and interacts with the hashed confidential docs pallet",
   "main": "src/index.js",
   "scripts": {
@@ -31,6 +31,7 @@
     "@polkadot/extension-dapp": "^0.43.1",
     "@smontero/generated-key-cipher-providers": "0.0.6",
     "@smontero/hashed-crypto": "^0.0.8",
+    "@smontero/jwt": "^0.0.1",
     "ipfs-http-client": "^55.0.0",
     "it-all": "^1.0.6",
     "mime-types": "^2.1.35",

@@ -26,8 +26,8 @@ class BaseVaultAuthProvider {
   }
 
   /**
-   * Checks whether the user identified by this auth provider is the same as
-   * the one identified by the passed in vault auth provider
+   * Checks whether the user identified by this auth channel is the same as
+   * the one identified by the passed in vault auth channel
    *
    * @param {Object} vaultAuthProvider
    *

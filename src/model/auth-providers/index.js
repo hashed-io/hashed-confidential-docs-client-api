@@ -1,7 +1,7 @@
-const GoogleVaultAuthProvider = require('./GoogleVaultAuthProvider')
-const PasswordVaultAuthProvider = require('./PasswordVaultAuthProvider')
+const createGoogleVaultAuthProvider = require('./GoogleVaultAuthProvider')
+const createPasswordVaultAuthProvider = require('./PasswordVaultAuthProvider')
 
 module.exports = {
-  GoogleVaultAuthProvider,
-  PasswordVaultAuthProvider
+  createGoogleVaultAuthProvider,
+  createPasswordVaultAuthProvider
 }

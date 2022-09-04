@@ -1,5 +1,5 @@
 class BaseFaucet {
-  async send (address) {
+  async send ({ authName, address, jwt, signature }) {
     throw new Error('Subclass must override the send method')
   }
 }

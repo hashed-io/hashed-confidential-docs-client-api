@@ -24,7 +24,7 @@ const hcd = new HashedConfidentialDocs({
   })
 ```
 
-Then the user has to be logged in to hashed confidential docs, to login the user a VaultAuthProvider is required, the VaultAuthProvider used depends on how the user is login in to the system ex. username/password, google sign in or a native wallet, the current auth providers are:
+Then the user has to be logged in to hashed confidential docs, to login the user a VaultAuthProvider is required, the VaultAuthProvider used depends on how the user is login in to the system ex. username/password, google sign in or a native wallet, the current auth channels are:
 
 - [PasswordVaultAuthProvider](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/f3a4bca9c3fe3201ebecc23985f4cf7fa78e8897/src/model/auth-providers/PasswordVaultAuthProvider.js#L8): for a user login in using username/password
 - [GoogleVaultAuthProvider](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/f3a4bca9c3fe3201ebecc23985f4cf7fa78e8897/src/model/auth-providers/GoogleVaultAuthProvider.js#L11): for a user login in google sign in

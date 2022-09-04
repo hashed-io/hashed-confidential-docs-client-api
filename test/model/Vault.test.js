@@ -174,7 +174,7 @@ describe('Test update VaultAuthProvider', () => {
     expect(vault.getAddress()).toBe(address)
   })
 
-  test('vault updateVaultAuthProvider should fail for auth providers not refering to same user', async () => {
+  test('vault updateVaultAuthProvider should fail for auth channels not refering to same user', async () => {
     expect.assertions(1)
     const authProvider = await util.getPasswordVaultAuthProvider(1)
     const newAuthProvider = await util.getPasswordVaultAuthProvider(2)

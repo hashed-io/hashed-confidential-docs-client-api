@@ -29,7 +29,7 @@ class Vault extends EventEmitter {
   /**
    * Unlocks the user vault and retrieves the users secret data,
    * if a vault does not exist a vault is created
-   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * @param {Object} vaultAuthProvider the vault auth channel that identifies the user and
    * enables the ciphering/deciphering of the vault @see model/Base
    * @throws error in case the login fails
    */
@@ -51,10 +51,10 @@ class Vault extends EventEmitter {
   }
 
   /**
-   * Updates the vault auth provider user to access the vault
+   * Updates the vault auth channel user to access the vault
    * ex. this can be used to update the user password
-   * @param {Object} oldVaultAuthProvider the current vault auth provider
-   * @param {Object} newVaultAuthProvider the new vault auth provider
+   * @param {Object} oldVaultAuthProvider the current vault auth channel
+   * @param {Object} newVaultAuthProvider the new vault auth channel
    */
   async updateVaultAuthProvider (oldVaultAuthProvider, newVaultAuthProvider) {
     if (!oldVaultAuthProvider.isSameUser(newVaultAuthProvider)) {
@@ -80,7 +80,7 @@ class Vault extends EventEmitter {
   /**
    * Checks whether the user has a vault
    *
-   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * @param {Object} vaultAuthProvider the vault auth channel that identifies the user and
    * enables the ciphering/deciphering of the vault @see model/BaseVaultAuthProvider
    *
    * @returns {boolean} whether the user already has a vault
@@ -123,7 +123,7 @@ class Vault extends EventEmitter {
 
   /**
    * Asserts that the user has a vault
-   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * @param {Object} vaultAuthProvider the vault auth channel that identifies the user and
    * enables the ciphering/deciphering of the vault @see model/BaseVaultAuthProvider
    * @throws {Error} if the vault is locked
    */
@@ -172,13 +172,32 @@ class Vault extends EventEmitter {
     }
     // console.log('publicKey: ', publicKey)
     let signer = vaultAuthProvider.getSigner()
+    let shouldFaucetFunds = false
     if (!signer) {
       vault.mnemonic = _generateMnemonic()
       signer = _createKeyPair(vault.mnemonic)
-      // TODO: Need a faucet to provide balance to the account so that it can call extrinsics
+      if (!vaultAuthProvider.jwt) {
+        throw new Error('Currently the faucet only supports jwt based auth channels')
+      }
+      shouldFaucetFunds = true
     }
     _configureWallet(this, signer)
-    await this._faucet.send(this.getAddress())
+    if (shouldFaucetFunds) {
+      const {
+        jwt,
+        authName
+      } = vaultAuthProvider
+      const signature = await this._polkadot.sign({
+        payload: jwt
+      })
+      await this._faucet.send({
+        authName,
+        address: this.getAddress(),
+        jwt,
+        signature
+      })
+    }
+
     await this._storeVault({
       userId,
       vault,

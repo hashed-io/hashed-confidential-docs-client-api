@@ -42,7 +42,7 @@ class HashedConfidentialDocs {
 
   /**
    * @desc Logs in the user to hashed confidential docs
-   * @param {Object} vaultAuthProvider the vault auth provider that identifies the user and
+   * @param {Object} vaultAuthProvider the vault auth channel that identifies the user and
    * enables the ciphering/deciphering of the vault @see model/Base
    * @throws error in case the login fails
    */
