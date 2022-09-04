@@ -30,7 +30,8 @@ class Fetch {
 
   async _request (url, opts) {
     const response = await fetch(url, opts)
-    const data = await response.json()
+    const isJson = response.headers.get('content-type')?.includes('application/json')
+    const data = isJson ? await response.json() : null
     if (!response.ok) {
       throw new Error((data && data.message) || response.status)
     }
