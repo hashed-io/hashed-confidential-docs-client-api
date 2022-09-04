@@ -1,5 +1,6 @@
 const { JWT } = require('@smontero/jwt')
 const BaseVaultAuthProvider = require('./BaseVaultAuthProvider')
+const { Fetch } = require('../../service')
 
 // Provides a base vault auth channel that abstracts common
 // functionality related to JWT handling
@@ -18,9 +19,8 @@ class BaseJWTVaultAuthProvider extends BaseVaultAuthProvider {
     jwt,
     faucetServerUrl
   }) {
-    const url = new URL('/api/auth-channel', faucetServerUrl)
-    url.search = new URLSearchParams({ authName })
-    const { keyUrl, issuer, audience } = await (await fetch(url)).json()
+    const fetch = new Fetch(faucetServerUrl)
+    const { keyUrl, issuer, audience } = await fetch.get('/api/auth-channel', { authName })
     const { payload: decodedJWT } = await new JWT().verify({
       token: jwt,
       keyUrl,

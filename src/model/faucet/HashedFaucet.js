@@ -1,30 +1,20 @@
 const BaseFaucet = require('./BaseFaucet')
+const { Fetch } = require('../../service')
 
 class HashedFaucet extends BaseFaucet {
   constructor (url) {
     super()
-    this._url = new URL('/api/distribution/distribute', url)
+    this._fetch = new Fetch(url)
   }
 
   async send ({ authName, address, jwt, signature }) {
     // console.log(`Sending amount: ${this._amount} to address: ${address}`)
-    const response = await fetch(this._url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        authName,
-        address,
-        jwt,
-        signature
-      })
+    return this._fetch.post('/api/distribution/distribute', {
+      authName,
+      address,
+      jwt,
+      signature
     })
-    if (!response.ok) {
-      const data = await response.json()
-      throw new Error((data && data.message) || response.status)
-    }
-    return response
   }
 }
 
