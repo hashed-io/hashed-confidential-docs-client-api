@@ -19,7 +19,7 @@ class BaseJWTVaultAuthProvider extends BaseVaultAuthProvider {
     faucetServerUrl
   }) {
     const url = new URL('/api/auth-channel', faucetServerUrl)
-    url.search = URLSearchParams({ authName })
+    url.search = new URLSearchParams({ authName })
     const { keyUrl, issuer, audience } = await (await fetch(url)).json()
     const { payload: decodedJWT } = await new JWT().verify({
       token: jwt,
