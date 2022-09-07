@@ -44,7 +44,8 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     } catch (err) {
       expect(err.message).toContain('The vault is locked')
     }
-    await hcd.login(await util.getPasswordVaultAuthProvider(1))
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
+    await hcd.login(authProvider)
     expect(hcd.isLoggedIn()).toBe(true)
     await hcd.logout()
     expect(hcd.isLoggedIn()).toBe(false)
@@ -63,7 +64,8 @@ describe('HashedConfidentialDocs Integration Tests', () => {
 
   test('New user login', async () => {
     expect(hcd.isLoggedIn()).toBe(false)
-    await hcd.login(await util.getPasswordVaultAuthProvider(1))
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
+    await hcd.login(authProvider)
     expect(hcd.isLoggedIn()).toBe(true)
   })
 
@@ -79,8 +81,8 @@ describe('HashedConfidentialDocs Integration Tests', () => {
   // })
 
   test('Cipher and view owned data', async () => {
-    const vaultAuthProvider = await util.getPasswordVaultAuthProvider(1)
-    await login(vaultAuthProvider)
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
+    await login(authProvider)
     const expectedOwnedData = getBaseDoc(1)
     let ownedData = await hcd.ownedData().add(expectedOwnedData)
     expectedOwnedData.owner = hcd.address()
@@ -110,7 +112,8 @@ describe('HashedConfidentialDocs Integration Tests', () => {
       ownedData
     } = await setupOwnedData(1)
     await logout()
-    await login(await util.getPasswordVaultAuthProvider(2))
+    const { authProvider } = await util.getPasswordVaultAuthProvider(2)
+    await login(authProvider)
 
     try {
       await hcd.ownedData().view(ownedData)
@@ -120,8 +123,8 @@ describe('HashedConfidentialDocs Integration Tests', () => {
   })
 
   test('Share data and view', async () => {
-    const vaultAuthProvider1 = await util.getPasswordVaultAuthProvider(1)
-    const vaultAuthProvider2 = await util.getPasswordVaultAuthProvider(2)
+    const { authProvider: vaultAuthProvider1 } = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider: vaultAuthProvider2 } = await util.getPasswordVaultAuthProvider(2)
     await login(vaultAuthProvider1)
     const toUserAddress = hcd.address()
     await logout()
@@ -152,7 +155,8 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     expect.assertions(15)
     const { actual } = await setupSharedData(1, 2)
     await logout()
-    await login(await util.getPasswordVaultAuthProvider(3))
+    const { authProvider } = await util.getPasswordVaultAuthProvider(3)
+    await login(authProvider)
     try {
       await hcd.sharedData().viewByCID(actual.cid)
     } catch (err) {
@@ -225,8 +229,8 @@ function newHashedConfidentialDocsInstance () {
   return hcd
 }
 async function setupSharedData (id1, id2) {
-  const vaultAuthProvider1 = await util.getPasswordVaultAuthProvider(id1)
-  const vaultAuthProvider2 = await util.getPasswordVaultAuthProvider(id2)
+  const { authProvider: vaultAuthProvider1 } = await util.getPasswordVaultAuthProvider(id1)
+  const { authProvider: vaultAuthProvider2 } = await util.getPasswordVaultAuthProvider(id2)
   await login(vaultAuthProvider1)
   const toUserAddress = hcd.address()
   await logout()
@@ -246,7 +250,7 @@ async function setupSharedData (id1, id2) {
 }
 
 async function setupOwnedData (id) {
-  const vaultAuthProvider = await util.getPasswordVaultAuthProvider(id)
+  const { authProvider: vaultAuthProvider } = await util.getPasswordVaultAuthProvider(id)
   await login(vaultAuthProvider)
   const expectedOwnedData = getBaseDoc(id)
   const ownedData = await hcd.ownedData().add(expectedOwnedData)

@@ -124,7 +124,7 @@ async function _getMetadataFile ({
   await googleDrive.init(email)
   let file = await _fetchMetadataFile(googleDrive)
   if (!file) {
-    if (this._createNew) {
+    if (createNew) {
       throw new Error('There is no current key, the createNew parameter should be used when there is an existing key that wants to be updated')
     }
     file = {

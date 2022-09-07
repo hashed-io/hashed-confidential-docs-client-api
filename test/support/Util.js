@@ -2,7 +2,7 @@ const find = require('find-process')
 const sleep = require('await-sleep')
 const { spawn } = require('node:child_process')
 const { Keyring } = require('@polkadot/keyring')
-const { PasswordVaultAuthProvider } = require('../../src/model/auth-providers')
+const { createPasswordVaultAuthProvider, BaseJWTVaultAuthProvider } = require('../../src/model/auth-providers')
 const { IPFS, Polkadot } = require('../../src/service')
 
 class Util {
@@ -123,14 +123,31 @@ class Util {
     return polkadot
   }
 
-  async getPasswordVaultAuthProvider (id) {
-    const provider = new PasswordVaultAuthProvider({
+  async getPasswordVaultAuthProvider (id, password) {
+    jest.spyOn(BaseJWTVaultAuthProvider, 'verifyJWT')
+      .mockResolvedValue(this.getDecodedJWT(id))
+    const providerDetails = this.getPasswordProviderDetails(id, password)
+    return {
+      providerDetails,
+      authProvider: await createPasswordVaultAuthProvider(providerDetails)
+    }
+  }
+
+  getPasswordProviderDetails (id, password = null) {
+    password = password || `Str15n$g3#${id}`
+    return {
       authName: 'afloat',
-      userId: `1232323#${id}`,
-      password: `Str15n$g3#${id}`
-    })
-    await provider.init()
-    return provider
+      jwt: `jwt${id}`,
+      faucetServerUrl: `http://localhost${id}:3000`,
+      password
+    }
+  }
+
+  getDecodedJWT (id) {
+    return {
+      sub: `1232323#${id}`,
+      email: `test${id}@test.com`
+    }
   }
 }
 

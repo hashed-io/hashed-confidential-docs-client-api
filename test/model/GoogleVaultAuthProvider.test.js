@@ -2,16 +2,22 @@
 
 jest.setTimeout(20000)
 
-global.window = { addEventListener () {} }
-// global.document = {}
-global.File = class {}
-const { GoogleVaultAuthProvider } = require('../../src/model/auth-providers')
+const { createGoogleVaultAuthProvider, BaseJWTVaultAuthProvider } = require('../../src/model/auth-providers')
+const { assertProviderInit, assertVerifyJWTCall } = require('../support/assertions')
+const Util = require('../support/Util')
+
+const util = new Util()
+const decodedJWT = util.getDecodedJWT(1)
+let verifyJWTMock = null
 
 const key1 = '0xb059db0c5ac255bc8b2ba0679502f7b343cbdccf55f5c82642f9976557146461'
 const key2 = '0x5284d018ab72746166db4528dd24b4dcde01ab00e6efbd922f0d9e9838e8d80f'
 let googleDrive = null
 
 beforeEach(() => {
+  verifyJWTMock = jest.spyOn(BaseJWTVaultAuthProvider, 'verifyJWT')
+    .mockResolvedValue(decodedJWT)
+
   googleDrive = {
     init: jest.fn(),
     getFileByName: jest.fn(),
@@ -26,10 +32,9 @@ describe('Test init/onVaultStored', () => {
     googleDrive.getFileByName.mockResolvedValueOnce(null)
     googleDrive.createFile.mockResolvedValueOnce({ id: 1 })
     const providerDetails = getProviderDetails(1)
-    const provider = new GoogleVaultAuthProvider(providerDetails)
-    await provider.init()
+    const provider = await createGoogleVaultAuthProvider(providerDetails)
     expect(googleDrive.init).toBeCalledTimes(1)
-    expect(googleDrive.init).toBeCalledWith(providerDetails.email)
+    expect(googleDrive.init).toBeCalledWith(decodedJWT.email)
     expect(googleDrive.getFileByName).toBeCalledTimes(1)
     expect(googleDrive.getFileByName).toBeCalledWith(getByFileNameParams())
     expect(googleDrive.createFile).toBeCalledTimes(1)
@@ -38,6 +43,9 @@ describe('Test init/onVaultStored', () => {
         pendingKey: ''
       }
     })
+    assertProviderInit({ provider, providerDetails, decodedJWT })
+    assertVerifyJWTCall(verifyJWTMock, providerDetails)
+
     const key = googleDrive.createFile.mock.calls[0][0].appProperties.pendingKey
     await provider.onVaultStored()
 
@@ -52,11 +60,11 @@ describe('Test init/onVaultStored', () => {
   })
   test('init/onVaultStored for non existing metadata file should fail when createNew parameter is true', async () => {
     expect.assertions(1)
+    googleDrive.getFileByName.mockResolvedValueOnce(null)
     const providerDetails = getProviderDetails(1)
     providerDetails.createNew = true
-    const provider = new GoogleVaultAuthProvider(providerDetails)
     try {
-      await provider.init()
+      await createGoogleVaultAuthProvider(providerDetails)
     } catch (error) {
       expect(error.message).toContain('There is no current key, the createNew parameter should be used when there is an existing key that wants to be updated')
     }
@@ -70,13 +78,14 @@ describe('Test init/onVaultStored', () => {
       }
     })
     const providerDetails = getProviderDetails(1)
-    const provider = new GoogleVaultAuthProvider(providerDetails)
-    await provider.init()
+    const provider = await createGoogleVaultAuthProvider(providerDetails)
     expect(googleDrive.init).toBeCalledTimes(1)
-    expect(googleDrive.init).toBeCalledWith(providerDetails.email)
+    expect(googleDrive.init).toBeCalledWith(decodedJWT.email)
     expect(googleDrive.getFileByName).toBeCalledTimes(1)
     expect(googleDrive.getFileByName).toBeCalledWith(getByFileNameParams())
     expect(googleDrive.createFile).toBeCalledTimes(0)
+    assertProviderInit({ provider, providerDetails, decodedJWT })
+    assertVerifyJWTCall(verifyJWTMock, providerDetails)
     await provider.onVaultStored()
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
@@ -98,10 +107,10 @@ describe('Test init/onVaultStored', () => {
     googleDrive.updateFile.mockResolvedValueOnce({ id: 1 })
     const providerDetails = getProviderDetails(1)
     providerDetails.createNew = true
-    const provider = new GoogleVaultAuthProvider(providerDetails)
+    const provider = await createGoogleVaultAuthProvider(providerDetails)
     await provider.init()
     expect(googleDrive.init).toBeCalledTimes(1)
-    expect(googleDrive.init).toBeCalledWith(providerDetails.email)
+    expect(googleDrive.init).toBeCalledWith(decodedJWT.email)
     expect(googleDrive.getFileByName).toBeCalledTimes(1)
     expect(googleDrive.getFileByName).toBeCalledWith(getByFileNameParams())
     expect(googleDrive.createFile).toBeCalledTimes(0)
@@ -114,6 +123,8 @@ describe('Test init/onVaultStored', () => {
         currentKey: key1
       }
     })
+    assertProviderInit({ provider, providerDetails, decodedJWT })
+    assertVerifyJWTCall(verifyJWTMock, providerDetails)
     const newKey = googleDrive.updateFile.mock.calls[0][0].appProperties.pendingKey
     await provider.onVaultStored()
     expect(googleDrive.updateFile).toBeCalledTimes(2)
@@ -138,14 +149,16 @@ describe('Test init/onVaultStored', () => {
     googleDrive.updateFile.mockResolvedValueOnce({ id: 1 })
     const providerDetails = getProviderDetails(1)
     providerDetails.createNew = true
-    const provider = new GoogleVaultAuthProvider(providerDetails)
+    const provider = await createGoogleVaultAuthProvider(providerDetails)
     await provider.init()
     expect(googleDrive.init).toBeCalledTimes(1)
-    expect(googleDrive.init).toBeCalledWith(providerDetails.email)
+    expect(googleDrive.init).toBeCalledWith(decodedJWT.email)
     expect(googleDrive.getFileByName).toBeCalledTimes(1)
     expect(googleDrive.getFileByName).toBeCalledWith(getByFileNameParams())
     expect(googleDrive.createFile).toBeCalledTimes(0)
     expect(googleDrive.updateFile).toBeCalledTimes(0)
+    assertProviderInit({ provider, providerDetails, decodedJWT })
+    assertVerifyJWTCall(verifyJWTMock, providerDetails)
     await provider.onVaultStored()
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
@@ -195,8 +208,8 @@ function getByFileNameParams () {
 function getProviderDetails (id) {
   return {
     authName: 'google',
-    userId: `userId${id}`,
-    email: `test${id}@test.com`,
+    jwt: 'jwt',
+    faucetServerUrl: 'http://localhost:3000',
     googleDrive
   }
 }

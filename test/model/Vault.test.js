@@ -6,7 +6,6 @@ global.window = { addEventListener () {} }
 global.File = class {}
 const { LocalAccountFaucet } = require('../../src/model/faucet')
 const { Vault } = require('../../src/model')
-const { PasswordVaultAuthProvider } = require('../../src/model/auth-providers')
 const { PredefinedActionConfirmer } = require('../../src/model/action-confirmer')
 const { BalancesApi, ConfidentialDocsApi, Polkadot } = require('../../src/service')
 const Util = require('../support/Util')
@@ -14,15 +13,15 @@ const Util = require('../support/Util')
 let confidentialDocsApi = null
 let polkadot = null
 let vault = null
+let faucet = null
 const actionConfirmer = new PredefinedActionConfirmer()
 const util = new Util()
-
 beforeEach(async () => {
   await util.restartNode()
   polkadot = await util.setupPolkadot()
   confidentialDocsApi = new ConfidentialDocsApi(polkadot, () => {})
   const balancesApi = new BalancesApi(new Polkadot({ api: polkadot._api }), () => {})
-  const faucet = new LocalAccountFaucet({
+  faucet = new LocalAccountFaucet({
     balancesApi,
     signer: util.getKeypair('//Alice'),
     amount: 1000000000
@@ -81,7 +80,9 @@ describe('vault lock/unlock', () => {
   // })
   test('vault lock/unlock password works', async () => {
     // vault._generateMnemonic.mockReturnValueOnce('//Alice')
-    const authProvider = await util.getPasswordVaultAuthProvider(1)
+    const signMock = jest.spyOn(polkadot, 'sign')
+    const sendMock = jest.spyOn(faucet, 'send')
+    const { authProvider, providerDetails } = await util.getPasswordVaultAuthProvider(1)
     expect(vault.isUnlocked()).toBe(false)
     expect(await vault.hasVault(authProvider)).toBe(false)
 
@@ -93,6 +94,14 @@ describe('vault lock/unlock', () => {
     let wallet = vault.getWallet()
     expect(wallet.isUnlocked()).toBe(true)
     const walletAddress = vault.getAddress()
+    const signPayload = { payload: providerDetails.jwt }
+    expect(signMock).toBeCalledWith(signPayload)
+    expect(sendMock).toBeCalledWith(expect.objectContaining({
+      authName: providerDetails.authName,
+      address: walletAddress,
+      jwt: providerDetails.jwt,
+      signature: expect.any(String)
+    }))
 
     await vault.lock()
     expect(vault.isUnlocked()).toBe(false)
@@ -115,7 +124,7 @@ describe('vault lock/unlock', () => {
 
 describe('sign/verify', () => {
   test('sign/verify works', async () => {
-    const authProvider = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
     await vault.unlock(authProvider)
     expect(vault.isUnlocked()).toBe(true)
     let payload = 'message to sign'
@@ -135,12 +144,12 @@ describe('sign/verify', () => {
   })
 
   test('sign/verify should fail for non signer', async () => {
-    let authProvider = await util.getPasswordVaultAuthProvider(1)
+    let { authProvider } = await util.getPasswordVaultAuthProvider(1)
     await vault.unlock(authProvider)
     expect(vault.isUnlocked()).toBe(true)
     const payload = 'message to sign'
-    const signature = await polkadot.sign({ payload })
-    authProvider = await util.getPasswordVaultAuthProvider(2)
+    const signature = await polkadot.sign({ payload });
+    ({ authProvider } = await util.getPasswordVaultAuthProvider(2))
     await vault.unlock(authProvider)
     const result = polkadot.verifySignature({
       payload,
@@ -152,7 +161,7 @@ describe('sign/verify', () => {
 
 describe('Test update VaultAuthProvider', () => {
   test('vault update VaultAuthProvider works', async () => {
-    const authProvider = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
     expect(vault.isUnlocked()).toBe(false)
     expect(await vault.hasVault(authProvider)).toBe(false)
 
@@ -161,11 +170,7 @@ describe('Test update VaultAuthProvider', () => {
     expect(await vault.hasVault(authProvider)).toBe(true)
     const address = vault.getAddress()
     const newPassword = 'Str15n$g3#2'
-    const newAuthProvider = new PasswordVaultAuthProvider({
-      authName: authProvider.authName,
-      userId: authProvider.userId,
-      password: newPassword
-    })
+    const { authProvider: newAuthProvider } = await util.getPasswordVaultAuthProvider(1, newPassword)
     await newAuthProvider.init()
     await vault.updateVaultAuthProvider(authProvider, newAuthProvider)
     expect(vault.isUnlocked()).toBe(false)
@@ -176,8 +181,8 @@ describe('Test update VaultAuthProvider', () => {
 
   test('vault updateVaultAuthProvider should fail for auth channels not refering to same user', async () => {
     expect.assertions(1)
-    const authProvider = await util.getPasswordVaultAuthProvider(1)
-    const newAuthProvider = await util.getPasswordVaultAuthProvider(2)
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider: newAuthProvider } = await util.getPasswordVaultAuthProvider(2)
     try {
       await vault.updateVaultAuthProvider(authProvider, newAuthProvider)
     } catch (err) {
@@ -187,15 +192,11 @@ describe('Test update VaultAuthProvider', () => {
 
   test('vault updateVaultAuthProvider should fail for user without vault', async () => {
     expect.assertions(3)
-    const authProvider = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
     expect(vault.isUnlocked()).toBe(false)
     expect(await vault.hasVault(authProvider)).toBe(false)
     const newPassword = 'Str15n$g3#2'
-    const newAuthProvider = new PasswordVaultAuthProvider({
-      authName: authProvider.authName,
-      userId: authProvider.userId,
-      password: newPassword
-    })
+    const { authProvider: newAuthProvider } = await util.getPasswordVaultAuthProvider(1, newPassword)
     await newAuthProvider.init()
 
     try {

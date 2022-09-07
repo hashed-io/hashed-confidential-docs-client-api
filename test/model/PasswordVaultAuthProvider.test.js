@@ -2,34 +2,40 @@
 
 jest.setTimeout(20000)
 
-global.window = { addEventListener () {} }
-// global.document = {}
-global.File = class {}
-const { PasswordVaultAuthProvider } = require('../../src/model/auth-providers')
+const { createPasswordVaultAuthProvider, BaseJWTVaultAuthProvider } = require('../../src/model/auth-providers')
+const { assertProviderInit, assertVerifyJWTCall } = require('../support/assertions')
+const Util = require('../support/Util')
+
+const util = new Util()
+const decodedJWT = util.getDecodedJWT(1)
+let verifyJWTMock = null
+
+beforeEach(() => {
+  verifyJWTMock = jest.spyOn(BaseJWTVaultAuthProvider, 'verifyJWT')
+    .mockResolvedValue(decodedJWT)
+})
+
+describe('Test creation', () => {
+  test('Test vault is properly initialized', async () => {
+    const providerDetails = util.getPasswordProviderDetails(1)
+    const provider = await createPasswordVaultAuthProvider(providerDetails)
+    assertProviderInit({
+      provider,
+      providerDetails,
+      decodedJWT
+    })
+    assertVerifyJWTCall(verifyJWTMock, providerDetails)
+  })
+})
 
 describe('Test validations', () => {
   test('vault unlock should fail for invalid user details', async () => {
-    expect.assertions(3)
+    expect.assertions(1)
     try {
-      new PasswordVaultAuthProvider({
-        userId: '1232323',
-        password: 'Str15n$g3'
-      })
-    } catch (error) {
-      expect(error.message).toContain('authName parameter is required')
-    }
-    try {
-      new PasswordVaultAuthProvider({
-        authName: 'google',
-        password: 'Str15n$g3'
-      })
-    } catch (error) {
-      expect(error.message).toContain('userId parameter is required')
-    }
-    try {
-      new PasswordVaultAuthProvider({
-        authName: 'google',
-        userId: '1232323',
+      await createPasswordVaultAuthProvider({
+        authName: 'afloat',
+        jwt: 'jwt',
+        faucetServerUrl: 'http://localhost:3000',
         password: 'Str1'
       })
     } catch (error) {

@@ -24,30 +24,19 @@
     "find-process": "^1.4.7",
     "jest": "^28.1.1",
     "jest-environment-jsdom": "^28.1.3",
-    "jest-localstorage-mock": "^2.4.21"
+    "jest-localstorage-mock": "^2.4.21",
+    "node-fetch": "^2.6.1"
   },
   "dependencies": {
     "@polkadot/api": "^8.1.1",
     "@polkadot/extension-dapp": "^0.43.1",
     "@smontero/generated-key-cipher-providers": "0.0.6",
     "@smontero/hashed-crypto": "^0.0.8",
-    "@smontero/jwt": "^0.0.1",
+    "@smontero/jwt": "^0.0.2",
     "ipfs-http-client": "^55.0.0",
     "it-all": "^1.0.6",
     "mime-types": "^2.1.35",
     "sha.js": "^2.4.11",
     "uint8arrays": "^3.0.0"
-  },
-  "jest": {
-    "transform": {
-      "node_modules/(data-uri-to-buffer|node-fetch|fetch-blob|formdata-polyfill)/.+\\.(j|t)sx?$": "babel-jest"
-    },
-    "transformIgnorePatterns": [
-      "node_modules/(?!(data-uri-to-buffer|node-fetch|fetch-blob|formdata-polyfill)/.*)"
-    ],
-    "resetMocks": false,
-    "setupFiles": [
-      "jest-localstorage-mock"
-    ]
   }
 }
