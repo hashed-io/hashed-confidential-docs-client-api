@@ -31,7 +31,7 @@ Then the user has to be logged in to hashed confidential docs, to login the user
 
 The creation and initialization of a vaultAuthProvider is done through creation methods which are exported from this package while the classes themselves are not. 
 
-- [createPasswordVaultAuthProvider](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/f3a4bca9c3fe3201ebecc23985f4cf7fa78e8897/src/model/auth-providers/PasswordVaultAuthProvider.js#L8)
+- [createPasswordVaultAuthProvider](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/34aa63ad206b6ee19b206f10999f08081598d53c/src/model/auth-providers/PasswordVaultAuthProvider.js#L76)
 ```
   const vaultAuthProvider = await createPasswordVaultAuthProvider({
         authName, // the name to identify this auth channel
@@ -40,7 +40,7 @@ The creation and initialization of a vaultAuthProvider is done through creation 
         password
       })
 ```
-- [createGoogleVaultAuthProvider](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/f3a4bca9c3fe3201ebecc23985f4cf7fa78e8897/src/model/auth-providers/GoogleVaultAuthProvider.js#L11)
+- [createGoogleVaultAuthProvider](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/34aa63ad206b6ee19b206f10999f08081598d53c/src/model/auth-providers/GoogleVaultAuthProvider.js#L88)
 ```
 const vaultAuthProvider = await createGoogleVaultAuthProvider({
       authName, // the name to identify this auth channel
