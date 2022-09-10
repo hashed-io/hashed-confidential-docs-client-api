@@ -1,7 +1,21 @@
 const { signatureVerify } = require('@polkadot/util-crypto')
 const { u8aToHex, u8aWrapBytes } = require('@polkadot/util')
 
+// Base class for classes that provide signing functionality
 class BaseWallet {
+  /**
+   * @name callTx
+   * @description Calls the extrinsic specified by the parameters
+   * @param {Polkadot} polkadot instance of polkadot service class
+   * @param {String} palletName name of the pallet
+   * @param {String} extrinsicName Name of the extrinsic
+   * @param {Array} params Array with the extrinsic parameters
+   * @param {function} txResponseHandler The function that will handle the tx reponse
+   * @param {String|KeyPair} [signer] The signer of the tx, the parameter is optional,
+   * it depends on the configured wallet if the parameter is required or not
+   * @param {boolean} sudo Whether the call should be done as sudo
+   * @returns tx response from polkadot api
+   */
   async callTx ({
     polkadot,
     palletName,
@@ -14,10 +28,26 @@ class BaseWallet {
     throw new Error('Subclass must override the callTx method')
   }
 
+  /**
+   * @name sign
+   * @description Sign a payload
+   * @param {Polkadot} polkadot instance of polkadot service class
+   * @param {String} payload Message to sign
+   * @param {String} signer User address
+   * @returns Object
+   */
   async sign ({ polkadot, payload, signer = null }) {
     throw new Error('Subclass must override the sign method')
   }
 
+  /**
+   * @name verifySignature
+   * @description Verify a signature
+   * @param {String} payload payload to verify
+   * @param {String} signature Signature from signMessage result
+   * @param {String} signer User Address
+   * @returns Object
+   */
   verifySignature ({ payload, signature, signer }) {
     throw new Error('Subclass must override the callTx method')
   }

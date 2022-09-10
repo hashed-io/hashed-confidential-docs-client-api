@@ -1,6 +1,7 @@
 
 const { BaseWallet, callTx, sign, getAddress, verifySignature, isKeyringPair } = require('./BaseWallet')
 
+// Stores securely the signing private key, and uses this key to provide signing functionality
 class VaultWallet extends BaseWallet {
   constructor ({
     vault,
@@ -13,6 +14,19 @@ class VaultWallet extends BaseWallet {
     })
   }
 
+  /**
+   * @name callTx
+   * @description Calls the extrinsic specified by the parameters
+   * @param {Polkadot} polkadot instance of polkadot service class
+   * @param {String} palletName name of the pallet
+   * @param {String} extrinsicName Name of the extrinsic
+   * @param {Array} params Array with the extrinsic parameters
+   * @param {function} txResponseHandler The function that will handle the tx reponse
+   * @param {String|KeyPair} [signer] The signer of the tx, the parameter is optional,
+   * it depends on the configured wallet if the parameter is required or not
+   * @param {boolean} sudo Whether the call should be done as sudo
+   * @returns tx response from polkadot api
+   */
   async callTx ({
     polkadot,
     palletName,
@@ -31,6 +45,14 @@ class VaultWallet extends BaseWallet {
     })
   }
 
+  /**
+   * @name sign
+   * @description Sign a payload
+   * @param {Polkadot} polkadot instance of polkadot service class
+   * @param {String} payload Message to sign
+   * @param {String} signer User address
+   * @returns Object
+   */
   async sign ({ polkadot, payload }) {
     return this._wallet.sign({
       polkadot,
@@ -38,6 +60,14 @@ class VaultWallet extends BaseWallet {
     })
   }
 
+  /**
+   * @name verifySignature
+   * @description Verify a signature
+   * @param {String} payload payload to verify
+   * @param {String} signature Signature from signMessage result
+   * @param {String} signer User Address
+   * @returns Object
+   */
   verifySignature ({ payload, signature }) {
     return this._wallet.verifySignature({ payload, signature })
   }

@@ -50,12 +50,6 @@ class BaseVaultAuthProvider {
   }
 
   /**
-   * @desc Initializes this instance, should be called before calling
-   * cipher/decipher methods
-   */
-  async init () {}
-
-  /**
    * This method should be overridden by VaultAuthProviders that require to do some processing
    * after it is confirmed that the vault has been successfully stored
    */
