@@ -161,6 +161,7 @@ function _createCipher ({
   file
 }) {
   const {
+    fileId,
     appProperties
   } = file
   const isPendingKey = !appProperties[CURRENT_KEY_NAME] || _this._createNew
@@ -188,7 +189,10 @@ function _createCipher ({
       if (isPendingKey) {
         appProperties[CURRENT_KEY_NAME] = appProperties[PENDING_KEY_NAME]
         appProperties[PENDING_KEY_NAME] = null
-        return _this._drive.updateFile(file)
+        return _this._drive.updateFile({
+          appProperties,
+          fileId
+        })
       }
     }
   }
