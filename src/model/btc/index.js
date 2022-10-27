@@ -1,7 +1,7 @@
-const XKey = require('./XKey')
+const createXKey = require('./XKey')
 const createBTC = require('./BTC')
 
 module.exports = {
-  XKey,
+  createXKey,
   createBTC
 }

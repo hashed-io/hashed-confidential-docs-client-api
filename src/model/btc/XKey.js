@@ -1,21 +1,18 @@
 const { BIP32Factory } = require('bip32')
 const bip39 = require('bip39')
-const ecc = require('tiny-secp256k1')
+const secp256k1 = require('tiny-secp256k1')
 const btc = require('bitcoinjs-lib')
 const xpubConverter = require('xpub-converter')
 
 const derivationPath = "m/48'/0'/0'/2'"
 
 class XKey {
-  static generateMnemonic () {
-    return bip39.generateMnemonic()
-  }
-
   constructor ({
     mnemonic = null,
-    network
+    network,
+    ecc
   }) {
-    this._mnemonic = mnemonic || XKey.generateMnemonic()
+    this._mnemonic = mnemonic || bip39.generateMnemonic()
     this._network = network
     const seed = bip39.mnemonicToSeedSync(this._mnemonic)
     const bip32 = BIP32Factory(ecc)
@@ -56,4 +53,16 @@ class XKey {
   }
 }
 
-module.exports = XKey
+async function createXKey ({
+  mnemonic = null,
+  network
+}) {
+  const ecc = await secp256k1
+  return new XKey({
+    mnemonic,
+    network,
+    ecc
+  })
+}
+
+module.exports = createXKey

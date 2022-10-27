@@ -1,11 +1,12 @@
 
 const btcjs = require('bitcoinjs-lib')
+const bip39 = require('bip39')
 const { EventEmitter } = require('events')
 const { Keyring } = require('@polkadot/keyring')
 const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
 const { Crypto } = require('@smontero/hashed-crypto')
 const { VaultWallet } = require('../model/wallet')
-const { createBTC, XKey } = require('../model/btc')
+const { createBTC, createXKey } = require('../model/btc')
 // const { LocalStorageKey } = require('../const')
 
 const _keyring = new Keyring()
@@ -57,7 +58,7 @@ class Vault extends EventEmitter {
     this._docCipher = _createDocCipher({ _this: this, privateKey, publicKey })
     this._btc = createBTC({
       vault: this,
-      xkey: new XKey({
+      xkey: await createXKey({
         mnemonic: btcMnemonic,
         network: this._btcUseTestnet ? btcjs.networks.testnet : btcjs.networks.bitcoin
       })
@@ -222,7 +223,7 @@ class Vault extends EventEmitter {
       signer = _createKeyPair(vault.mnemonic)
     }
     if (!vault.btcMnemonic) {
-      vault.btcMnemonic = XKey.generateMnemonic()
+      vault.btcMnemonic = bip39.generateMnemonic()
       requiresPatching = true
     }
     _configureWallet(this, signer)

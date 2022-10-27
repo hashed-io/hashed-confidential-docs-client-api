@@ -4,24 +4,24 @@ jest.setTimeout(70000)
 const bip39 = require('bip39')
 const btc = require('bitcoinjs-lib')
 
-const { XKey } = require('../../../src/model/btc')
+const { createXKey } = require('../../../src/model/btc')
 
 describe('Test XKey functionality', () => {
   test('Generate/Import new XKey', async () => {
-    assertKeyGenerationAndImport(btc.networks.bitcoin)
-    assertKeyGenerationAndImport(btc.networks.testnet)
+    await assertKeyGenerationAndImport(btc.networks.bitcoin)
+    await assertKeyGenerationAndImport(btc.networks.testnet)
   })
 
   test('FullXPUB format', async () => {
     const mnemonic = 'over whip setup elephant program cost absurd around myth twist discover raw'
-    const xkeyMainnet = new XKey({
+    const xkeyMainnet = await createXKey({
       mnemonic,
       network: btc.networks.bitcoin
     })
     expect(xkeyMainnet.fullXPUB()).toBe("[f9cd485c/48'/0'/0'/2']xpub6EuYgeFXgUgqpRVE63ooLBMKAAo2N1GV8ocLqU3hVhFWx3oy4RNwJxmTLZRD64iMjcG7t7X4aca2tgsv4s2hP7i1uE2Z3ki4Bp8tXyZoCNG")
     expect(xkeyMainnet.fullXPUBMultisig()).toBe("[f9cd485c/48'/0'/0'/2']Zpub75UARDKoYoLAwb2qhRr2aRt8Du8BTbw5HJJTKX71dUqggS1LL96LeCwfBgHreKF6nMZiFeiJP9fdnRiooV1g85BtUNXocyp2czY3u4UEyNR")
 
-    const xkeyTestnet = new XKey({
+    const xkeyTestnet = await createXKey({
       mnemonic,
       network: btc.networks.testnet
     })
@@ -30,10 +30,10 @@ describe('Test XKey functionality', () => {
   })
 })
 
-function assertKeyGenerationAndImport (network) {
-  const xkey1 = new XKey({ network })
+async function assertKeyGenerationAndImport (network) {
+  const xkey1 = await createXKey({ network })
   expect(bip39.validateMnemonic(xkey1.mnemonic())).toBe(true)
-  const xkey2 = new XKey({ mnemonic: xkey1.mnemonic(), network })
+  const xkey2 = await createXKey({ mnemonic: xkey1.mnemonic(), network })
   expect(bip39.validateMnemonic(xkey2.mnemonic())).toBe(true)
   expect(xkey1.mnemonic()).toBe(xkey2.mnemonic())
   expect(xkey1.fullXPUBMultisig()).toBe(xkey2.fullXPUBMultisig())
