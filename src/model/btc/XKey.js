@@ -1,7 +1,6 @@
 const { BIP32Factory } = require('bip32')
 const bip39 = require('bip39')
 const ecc = require('tiny-secp256k1')
-const bip32 = BIP32Factory(ecc)
 const btc = require('bitcoinjs-lib')
 const xpubConverter = require('xpub-converter')
 
@@ -19,6 +18,7 @@ class XKey {
     this._mnemonic = mnemonic || XKey.generateMnemonic()
     this._network = network
     const seed = bip39.mnemonicToSeedSync(this._mnemonic)
+    const bip32 = BIP32Factory(ecc)
     this._master = bip32.fromSeed(seed, network)
     this._derived = bip32.fromSeed(seed, network).derivePath(derivationPath)
   }
