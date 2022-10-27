@@ -33,10 +33,15 @@
     "@smontero/generated-key-cipher-providers": "0.0.6",
     "@smontero/hashed-crypto": "^0.0.8",
     "@smontero/jwt": "^0.0.2",
+    "bip32": "^3.1.0",
+    "bip39": "^3.0.4",
+    "bitcoinjs-lib": "^6.0.2",
     "ipfs-http-client": "^55.0.0",
     "it-all": "^1.0.6",
     "mime-types": "^2.1.35",
     "sha.js": "^2.4.11",
-    "uint8arrays": "^3.0.0"
+    "tiny-secp256k1": "^2.2.1",
+    "uint8arrays": "^3.0.0",
+    "xpub-converter": "^1.0.2"
   }
 }

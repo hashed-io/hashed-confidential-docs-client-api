@@ -1,8 +1,11 @@
+
+const btcjs = require('bitcoinjs-lib')
 const { EventEmitter } = require('events')
 const { Keyring } = require('@polkadot/keyring')
 const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
 const { Crypto } = require('@smontero/hashed-crypto')
 const { VaultWallet } = require('../model/wallet')
+const { createBTC, XKey } = require('../model/btc')
 // const { LocalStorageKey } = require('../const')
 
 const _keyring = new Keyring()
@@ -12,17 +15,20 @@ class Vault extends EventEmitter {
     confidentialDocsApi,
     ipfs,
     faucet,
-    actionConfirmer
+    actionConfirmer,
+    btcUseTestnet = false
   }) {
     super()
     this._polkadot = polkadot
     this._confidentialDocsApi = confidentialDocsApi
     this._ipfs = ipfs
     this._faucet = faucet
+    this._btcUseTestnet = btcUseTestnet
     this._crypto = new Crypto()
     this._vault = null
     this._wallet = null
     this._docCipher = null
+    this._btc = null
     this._actionConfirmer = actionConfirmer
   }
 
@@ -45,9 +51,17 @@ class Vault extends EventEmitter {
     // console.log('vault: ', vault)
     const {
       privateKey,
-      publicKey
+      publicKey,
+      btcMnemonic
     } = vault
     this._docCipher = _createDocCipher({ _this: this, privateKey, publicKey })
+    this._btc = createBTC({
+      vault: this,
+      xkey: new XKey({
+        mnemonic: btcMnemonic,
+        network: this._btcUseTestnet ? btcjs.networks.testnet : btcjs.networks.bitcoin
+      })
+    })
   }
 
   /**
@@ -99,6 +113,7 @@ class Vault extends EventEmitter {
     // this._vault = null
     this._wallet = null
     this._docCipher = null
+    this._btc = null
     this.emit('lock')
     // localStorage.removeItem(LocalStorageKey.VAULT_CONTEXT)
   }
@@ -155,6 +170,16 @@ class Vault extends EventEmitter {
   }
 
   /**
+   * Returns the btc object that enables btc related actions
+   * @returns {BTC} @see models/btc/BTC
+   * @throws {Error} if the vault is locked
+   */
+  getBTC () {
+    this.assertIsUnlocked()
+    return this._btc
+  }
+
+  /**
    * Returns the address of the vault user
    * @returns {string} users address
    * @throws {Error} if the vault is locked
@@ -164,22 +189,41 @@ class Vault extends EventEmitter {
     return this._wallet.getAddress()
   }
 
-  async _createVault (userId, vaultAuthProvider) {
-    const { privateKey, publicKey } = this._crypto.generateKeyPair()
-    const vault = {
-      privateKey,
-      publicKey
+  async _patchVault ({
+    userId,
+    vaultAuthProvider,
+    vault
+  }) {
+    // console.log('Vault: ', vault)
+    let requiresPatching = false
+    vault = vault || {}
+    if (!vault.privateKey) {
+      const { privateKey, publicKey } = this._crypto.generateKeyPair()
+      vault = {
+        ...vault,
+        privateKey,
+        publicKey
+      }
+      requiresPatching = true
     }
+
     // console.log('publicKey: ', publicKey)
     let signer = vaultAuthProvider.getSigner()
     let shouldFaucetFunds = false
     if (!signer) {
-      vault.mnemonic = _generateMnemonic()
-      signer = _createKeyPair(vault.mnemonic)
-      if (!vaultAuthProvider.jwt) {
-        throw new Error('Currently the faucet only supports jwt based auth channels')
+      if (!vault.mnemonic) {
+        vault.mnemonic = _generateMnemonic()
+        if (!vaultAuthProvider.jwt) {
+          throw new Error('Currently the faucet only supports jwt based auth channels')
+        }
+        requiresPatching = true
+        shouldFaucetFunds = true
       }
-      shouldFaucetFunds = true
+      signer = _createKeyPair(vault.mnemonic)
+    }
+    if (!vault.btcMnemonic) {
+      vault.btcMnemonic = XKey.generateMnemonic()
+      requiresPatching = true
     }
     _configureWallet(this, signer)
     if (shouldFaucetFunds) {
@@ -198,11 +242,13 @@ class Vault extends EventEmitter {
       })
     }
 
-    await this._storeVault({
-      userId,
-      vault,
-      vaultAuthProvider
-    })
+    if (requiresPatching) {
+      await this._storeVault({
+        userId,
+        vault,
+        vaultAuthProvider
+      })
+    }
     return {
       vault,
       signer
@@ -225,16 +271,7 @@ class Vault extends EventEmitter {
   async _decipherVault (vaultDetails, vaultAuthProvider) {
     const fullCipheredPayload = await this._ipfs.cat(vaultDetails.cid)
     // console.log('cipheredVault', fullCipheredPayload)
-    const vault = await vaultAuthProvider.decipher(fullCipheredPayload)
-    let signer = vaultAuthProvider.getSigner()
-    if (!signer) {
-      signer = _createKeyPair(vault.mnemonic)
-    }
-    _configureWallet(this, signer)
-    return {
-      vault,
-      signer
-    }
+    return vaultAuthProvider.decipher(fullCipheredPayload)
   }
 
   async _hasVault (userId) {
@@ -278,13 +315,19 @@ async function _getVault ({
 }) {
   const userId = _generateUserId(vaultAuthProvider)
   const vaultDetails = await _this._findVault(userId)
-
-  const {
+  let vault = null
+  let signer = null
+  if (vaultDetails) {
+    vault = await _this._decipherVault(vaultDetails, vaultAuthProvider)
+  }
+  ({
     vault,
     signer
-  } = vaultDetails
-    ? await _this._decipherVault(vaultDetails, vaultAuthProvider)
-    : await _this._createVault(userId, vaultAuthProvider)
+  } = await _this._patchVault({
+    vault,
+    userId,
+    vaultAuthProvider
+  }))
 
   return {
     userId,

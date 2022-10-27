@@ -55,7 +55,8 @@ describe('Test init/onVaultStored', () => {
       appProperties: {
         pendingKey: null,
         currentKey: key
-      }
+      },
+      fileCreation: false
     })
   })
   test('init/onVaultStored for non existing metadata file should fail when createNew parameter is true', async () => {
@@ -90,7 +91,7 @@ describe('Test init/onVaultStored', () => {
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
       fileId: 1,
-      updateOfNewFile: false,
+      fileCreation: false,
       appProperties: {
         pendingKey: null,
         currentKey: key1
@@ -108,7 +109,6 @@ describe('Test init/onVaultStored', () => {
     const providerDetails = getProviderDetails(1)
     providerDetails.createNew = true
     const provider = await createGoogleVaultAuthProvider(providerDetails)
-    await provider.init()
     expect(googleDrive.init).toBeCalledTimes(1)
     expect(googleDrive.init).toBeCalledWith(decodedJWT.email)
     expect(googleDrive.getFileByName).toBeCalledTimes(1)
@@ -117,7 +117,7 @@ describe('Test init/onVaultStored', () => {
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
       fileId: 1,
-      updateOfNewFile: false,
+      fileCreation: false,
       appProperties: {
         pendingKey: '',
         currentKey: key1
@@ -130,7 +130,7 @@ describe('Test init/onVaultStored', () => {
     expect(googleDrive.updateFile).toBeCalledTimes(2)
     assertMetadataFile(googleDrive.updateFile.mock.calls[1][0], {
       fileId: 1,
-      updateOfNewFile: false,
+      fileCreation: false,
       appProperties: {
         pendingKey: null,
         currentKey: newKey
@@ -150,7 +150,6 @@ describe('Test init/onVaultStored', () => {
     const providerDetails = getProviderDetails(1)
     providerDetails.createNew = true
     const provider = await createGoogleVaultAuthProvider(providerDetails)
-    await provider.init()
     expect(googleDrive.init).toBeCalledTimes(1)
     expect(googleDrive.init).toBeCalledWith(decodedJWT.email)
     expect(googleDrive.getFileByName).toBeCalledTimes(1)
@@ -163,7 +162,7 @@ describe('Test init/onVaultStored', () => {
     expect(googleDrive.updateFile).toBeCalledTimes(1)
     assertMetadataFile(googleDrive.updateFile.mock.calls[0][0], {
       fileId: 1,
-      updateOfNewFile: false,
+      fileCreation: false,
       appProperties: {
         pendingKey: null,
         currentKey: key2
@@ -172,14 +171,17 @@ describe('Test init/onVaultStored', () => {
   })
 })
 
-function assertMetadataFile (actual, { fileId, appProperties, updateOfNewFile = true }) {
+function assertMetadataFile (actual, { fileId, appProperties, fileCreation = true }) {
   expect(actual).not.toBeNull()
   if (fileId) {
     expect(actual.fileId).toBe(fileId)
   }
-  if (updateOfNewFile) {
+  if (fileCreation) {
     expect(actual.name).toBe('hcd.metadata')
     expect(actual.parents).toEqual(['appDataFolder'])
+  } else {
+    expect(actual.name).not.toBeDefined()
+    expect(actual.parents).not.toBeDefined()
   }
   assertAppProperty(actual.appProperties.pendingKey, appProperties.pendingKey)
   assertAppProperty(actual.appProperties.currentKey, appProperties.currentKey)

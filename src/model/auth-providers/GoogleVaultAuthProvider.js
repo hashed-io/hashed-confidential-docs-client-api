@@ -133,12 +133,21 @@ async function _getMetadataFile ({
       appProperties: {}
     }
   }
-  const appProperties = file.appProperties
-  if (!file.fileId || (createNew && !appProperties[PENDING_KEY_NAME])) {
+  const {
+    fileId,
+    appProperties
+  } = file
+  if (!fileId || (createNew && !appProperties[PENDING_KEY_NAME])) {
     appProperties[PENDING_KEY_NAME] = (new Crypto()).generateKeyPair().privateKey
-    const op = file.fileId ? 'updateFile' : 'createFile'
-    const { id } = await googleDrive[op](file)
-    file.fileId = id
+    if (fileId) {
+      await googleDrive.updateFile({
+        fileId,
+        appProperties
+      })
+    } else {
+      const { id } = await googleDrive.createFile(file)
+      file.fileId = id
+    }
   }
   return file
 }

@@ -46,38 +46,6 @@ afterEach(async () => {
 })
 
 describe('vault lock/unlock', () => {
-  // test('vault lock/unlock signature works', async () => {
-  //   expect(vault.isUnlocked()).toBe(false)
-  //   expect(await vault.hasVault({
-  //     signer: signer1
-  //   })).toBe(false)
-
-  //   await vault.unlock({
-  //     signer: signer1
-  //   })
-  //   expect(vault.isUnlocked()).toBe(true)
-  //   expect(await vault.hasVault({
-  //     signer: signer1
-  //   })).toBe(true)
-  //   expect(vault.getWallet()).toEqual(signer1)
-  //   expect(vault.getDocCipher()).toBeInstanceOf(DocCipher)
-
-  //   await vault.lock()
-  //   expect(vault.isUnlocked()).toBe(false)
-  //   expect(await vault.hasVault({
-  //     signer: signer1
-  //   })).toBe(true)
-
-  //   await vault.unlock({
-  //     signer: signer1
-  //   })
-  //   expect(vault.isUnlocked()).toBe(true)
-  //   expect(await vault.hasVault({
-  //     signer: signer1
-  //   })).toBe(true)
-  //   expect(vault.getWallet()).toEqual(signer1)
-  //   expect(vault.getDocCipher()).toBeInstanceOf(DocCipher)
-  // })
   test('vault lock/unlock password works', async () => {
     // vault._generateMnemonic.mockReturnValueOnce('//Alice')
     const signMock = jest.spyOn(polkadot, 'sign')
@@ -91,6 +59,8 @@ describe('vault lock/unlock', () => {
     expect(await vault.hasVault(authProvider)).toBe(true)
     let docCipher = vault.getDocCipher()
     expect(docCipher.isUnlocked()).toBe(true)
+    let btc = vault.getBTC()
+    expect(btc.isUnlocked()).toBe(true)
     let wallet = vault.getWallet()
     expect(wallet.isUnlocked()).toBe(true)
     const walletAddress = vault.getAddress()
@@ -106,15 +76,19 @@ describe('vault lock/unlock', () => {
     await vault.lock()
     expect(vault.isUnlocked()).toBe(false)
     expect(docCipher.isUnlocked()).toBe(false)
+    expect(btc.isUnlocked()).toBe(false)
     expect(wallet.isUnlocked()).toBe(false)
     expect(await vault.hasVault(authProvider)).toBe(true)
 
     await vault.unlock(authProvider)
     expect(vault.isUnlocked()).toBe(true)
     expect(docCipher.isUnlocked()).toBe(false)
+    expect(btc.isUnlocked()).toBe(false)
     expect(wallet.isUnlocked()).toBe(false)
     docCipher = vault.getDocCipher()
     expect(docCipher.isUnlocked()).toBe(true)
+    btc = vault.getBTC()
+    expect(btc.isUnlocked()).toBe(true)
     wallet = vault.getWallet()
     expect(wallet.isUnlocked()).toBe(true)
     expect(await vault.hasVault(authProvider)).toBe(true)
@@ -171,7 +145,6 @@ describe('Test update VaultAuthProvider', () => {
     const address = vault.getAddress()
     const newPassword = 'Str15n$g3#2'
     const { authProvider: newAuthProvider } = await util.getPasswordVaultAuthProvider(1, newPassword)
-    await newAuthProvider.init()
     await vault.updateVaultAuthProvider(authProvider, newAuthProvider)
     expect(vault.isUnlocked()).toBe(false)
     await vault.unlock(newAuthProvider)
@@ -197,7 +170,6 @@ describe('Test update VaultAuthProvider', () => {
     expect(await vault.hasVault(authProvider)).toBe(false)
     const newPassword = 'Str15n$g3#2'
     const { authProvider: newAuthProvider } = await util.getPasswordVaultAuthProvider(1, newPassword)
-    await newAuthProvider.init()
 
     try {
       await vault.updateVaultAuthProvider(authProvider, newAuthProvider)

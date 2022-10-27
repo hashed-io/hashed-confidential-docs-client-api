@@ -13,6 +13,7 @@ class HashedConfidentialDocs {
    * @param {String} [opts.ipfsAuthHeader] the ipfs authentication header if required
    * @param {Object} polkadot An instance of the polkadot class @see service/Polkadot
    * @param {Object} faucet faucet instance object to use to fund newly created accounts @see model/BaseFaucet
+   * @param {boolean} btcUseTestnet whether the bitcoin testnet should be used
    *
    * @return {Object} instance of hashed confidential docs
    */
@@ -20,7 +21,8 @@ class HashedConfidentialDocs {
     ipfsURL,
     ipfsAuthHeader,
     polkadot,
-    faucet
+    faucet,
+    btcUseTestnet = false
   }) {
     this._ipfs = new IPFS({
       url: ipfsURL,
@@ -33,7 +35,8 @@ class HashedConfidentialDocs {
       confidentialDocsApi: this._confidentialDocsApi,
       ipfs: this._ipfs,
       faucet,
-      actionConfirmer: new ModalActionConfirmer()
+      actionConfirmer: new ModalActionConfirmer(),
+      btcUseTestnet
     })
 
     this._ownedData = null
@@ -118,6 +121,16 @@ class HashedConfidentialDocs {
    */
   vault () {
     return this._vault
+  }
+
+  /**
+   * Returns the btc object that enables btc related actions
+   * @returns {BTC} @see models/btc/BTC
+   * @throws {Error} if the vault is locked
+   */
+  btc () {
+    this._vault.assertIsUnlocked()
+    return this.vault().getBTC()
   }
 }
 

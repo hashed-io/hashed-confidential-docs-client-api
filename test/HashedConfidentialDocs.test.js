@@ -170,6 +170,28 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     }
   })
 
+  test('XPUB Generation', async () => {
+    // const { authProvider } = await util.getPasswordVaultAuthProvider(3)
+    // await login(authProvider)
+    // const fullXPUB = await hcd.btc().fullXPUB()
+    // expect(fullXPUB).toContain("/48'/0'/0'/2'")
+    // expect(fullXPUB).toContain('xpub')
+    // const fullXPUBMultisig = await hcd.btc().fullXPUBMultisig()
+    // expect(fullXPUBMultisig).toContain("/48'/0'/0'/2'")
+    // expect(fullXPUBMultisig).toContain('Zpub')
+    // await logout(authProvider)
+    // await login(authProvider)
+    // expect(await hcd.btc().fullXPUB()).toBe(fullXPUB)
+    // expect(await hcd.btc().fullXPUBMultisig()).toBe(fullXPUBMultisig)
+    await assertXPUBGeneration({
+      hcd
+    })
+    await assertXPUBGeneration({
+      hcd: newHashedConfidentialDocsInstance(true),
+      testnet: true
+    })
+  })
+
   // test('Only "shared to" user can update metadata', async () => {
   //   expect.assertions(18)
   //   const { sharedData } = await setupSharedData(1)
@@ -218,12 +240,13 @@ describe('HashedConfidentialDocs Integration Tests', () => {
   // })
 })
 
-function newHashedConfidentialDocsInstance () {
+function newHashedConfidentialDocsInstance (btcUseTestnet = false) {
   const hcd = new HashedConfidentialDocs({
     ipfsURL: 'https://ipfs.infura.io:5001',
     ipfsAuthHeader: util.getIPFSAuthHeader(),
     polkadot,
-    faucet
+    faucet,
+    btcUseTestnet
   })
   hcd._vault._actionConfirmer = new PredefinedActionConfirmer()
   return hcd
@@ -304,4 +327,23 @@ function assertSharedData (actual, expected) {
   expect(actual.from).toBe(expected.from)
   expect(actual.to).toBe(expected.to)
   expect(actual.cid).not.toBeNull()
+}
+
+async function assertXPUBGeneration ({
+  hcd,
+  testnet = false
+}) {
+  const { authProvider } = await util.getPasswordVaultAuthProvider(3)
+  await hcd.login(authProvider)
+  const fullXPUB = await hcd.btc().fullXPUB()
+  expect(fullXPUB).toContain("/48'/0'/0'/2'")
+  expect(fullXPUB).toContain(testnet ? 'tpub' : 'xpub')
+  const fullXPUBMultisig = await hcd.btc().fullXPUBMultisig()
+  expect(fullXPUBMultisig).toContain("/48'/0'/0'/2'")
+  expect(fullXPUBMultisig).toContain(testnet ? 'Vpub' : 'Zpub')
+  await hcd.logout(authProvider)
+  await hcd.login(authProvider)
+  expect(await hcd.btc().fullXPUB()).toBe(fullXPUB)
+  expect(await hcd.btc().fullXPUBMultisig()).toBe(fullXPUBMultisig)
+  await hcd.logout(authProvider)
 }
