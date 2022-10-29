@@ -1,5 +1,6 @@
 
 const { BaseWallet, callTx, sign, getAddress, verifySignature, isKeyringPair } = require('./BaseWallet')
+const { ActionType } = require('../../const')
 
 // Stores securely the signing private key, and uses this key to provide signing functionality
 class VaultWallet extends BaseWallet {
@@ -123,18 +124,21 @@ function _create ({ vault, signer }) {
             reject(new Error(reason))
           }
           vault._actionConfirmer.confirm({
-            palletName,
-            extrinsicName,
-            params: polkadot.addParamMetadata({
+            actionType: ActionType.CALL_EXTRINSIC,
+            payload: {
               palletName,
               extrinsicName,
-              params
-            }),
-            docs: polkadot.extrinsicDocs({
-              palletName,
-              extrinsicName
-            }),
-            address: this.getAddress()
+              params: polkadot.addParamMetadata({
+                palletName,
+                extrinsicName,
+                params
+              }),
+              docs: polkadot.extrinsicDocs({
+                palletName,
+                extrinsicName
+              }),
+              address: this.getAddress()
+            }
           },
           onConfirm,
           onCancel
@@ -179,8 +183,11 @@ function _create ({ vault, signer }) {
             reject(new Error(reason))
           }
           vault._actionConfirmer.confirm({
-            payload,
-            address: this.getAddress()
+            actionType: ActionType.SIGN_PAYLOAD,
+            payload: {
+              payload,
+              address: this.getAddress()
+            }
           },
           onConfirm,
           onCancel

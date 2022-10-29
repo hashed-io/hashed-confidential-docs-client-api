@@ -4,6 +4,7 @@ jest.setTimeout(30000)
 global.window = { addEventListener () {} }
 // global.document = {}
 global.File = class {}
+const { ActionType } = require('../../src/const')
 const { LocalAccountFaucet } = require('../../src/model/faucet')
 const { Vault } = require('../../src/model')
 const { PredefinedActionConfirmer } = require('../../src/model/action-confirmer')
@@ -98,6 +99,7 @@ describe('vault lock/unlock', () => {
 
 describe('sign/verify', () => {
   test('sign/verify works', async () => {
+    const confirmActionSpy = jest.spyOn(actionConfirmer, 'confirm')
     const { authProvider } = await util.getPasswordVaultAuthProvider(1)
     await vault.unlock(authProvider)
     expect(vault.isUnlocked()).toBe(true)
@@ -115,6 +117,42 @@ describe('sign/verify', () => {
       signature
     })
     expect(result.isValid).toBe(true)
+    expect(confirmActionSpy).toHaveBeenCalledTimes(4)
+    expect(confirmActionSpy).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      actionType: ActionType.CALL_EXTRINSIC,
+      payload: {
+        palletName: 'confidentialDocs',
+        extrinsicName: 'setVault',
+        params: [
+          {
+            name: 'userId',
+            value: expect.any(String)
+          },
+          {
+            name: 'publicKey',
+            value: expect.any(String)
+          },
+          {
+            name: 'cid',
+            value: expect.any(String)
+          }
+        ],
+        docs: expect.any(Array),
+        address: expect.any(String)
+      }
+
+    }), expect.any(Function), expect.any(Function))
+    expect(confirmActionSpy).toHaveBeenNthCalledWith(4, expect.objectContaining({
+      actionType: ActionType.SIGN_PAYLOAD,
+      payload: {
+        payload: {
+          s1: 'message to sign',
+          i1: 1
+        },
+        address: expect.any(String)
+      }
+
+    }), expect.any(Function), expect.any(Function))
   })
 
   test('sign/verify should fail for non signer', async () => {

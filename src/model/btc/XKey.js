@@ -13,7 +13,7 @@ class XKey {
     ecc
   }) {
     this._mnemonic = mnemonic || bip39.generateMnemonic()
-    this._network = network
+    this.network = network
     const seed = bip39.mnemonicToSeedSync(this._mnemonic)
     const bip32 = BIP32Factory(ecc)
     this._master = bip32.fromSeed(seed, network)
@@ -33,7 +33,7 @@ class XKey {
   }
 
   fullXPUBMultisig () {
-    return this._fullXPUB(this._network === btc.networks.bitcoin ? 'Zpub' : 'Vpub')
+    return this._fullXPUB(this.network === btc.networks.bitcoin ? 'Zpub' : 'Vpub')
   }
 
   fullXPUB () {

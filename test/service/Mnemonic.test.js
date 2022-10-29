@@ -88,19 +88,41 @@ describe('Test Mnemonic functionality', () => {
     console.log('pfp1: ', node.deriveHardened(0).parentFingerprint)
     const psbtText = 'cHNidP8BAH0BAAAAAdXuu3IED9S60Omnf/WHLT+J8qrhpYogZ74/weQP3wYtAAAAAAD9////ApdKAAAAAAAAIgAgVgpgVYN7cpdeGpYqj/SqPJ9xSRC/NfCV1WBN9a6PjcAQJwAAAAAAABYAFN/MoQ/TWYyv1JKSJ8O//Qzl2aeXAAAAAAABAOoCAAAAAAEBpD4rrrXl2igLagnrYYoFg7eHapxeOhJn4FlsvVaF9KAAAAAAAP7///8CMHUAAAAAAAAiACAKskUgXIRuFNk+kXVu0ROvvrP6eoH0mdb/JazQsruP5PiISgAAAAAAFgAUNAY1ixp3MRBepRuRYLdXa6r6jeQCRzBEAiBnLFY6GsOYaE0jOnUPPabL62WJDhuTQgYUB8XOShMdbgIgFoiB4ntE9FEtfUZzlnCMBh91liI1ffBYyCOQwSx+ZWYBIQKRXTNQp5ekscMjVNhM5ya7vCem67bFjmzuByZ33RAGsYdJJAABASswdQAAAAAAACIAIAqyRSBchG4U2T6RdW7RE6++s/p6gfSZ1v8lrNCyu4/kAQVHUiECU2CGOnnwKuB1Yjadth7xInlcMd/A9NjrNDJbXVUdkBchAzL0FNWhnvnH1VRk4m5VNNQg+YlFWeUdEzd7yxHxGyLZUq4iBgJTYIY6efAq4HViNp22HvEieVwx38D02Os0MltdVR2QFxz5zUhcMAAAgAAAAIAAAACAAgAAgAAAAAAAAAAAIgYDMvQU1aGe+cfVVGTiblU01CD5iUVZ5R0TN3vLEfEbItkcqLRVVTAAAIAAAACAAAAAgAIAAIAAAAAAAAAAAAAiAgKXkSekytkdeEL5hKx9yHbmVYxTnwACtpyPIYSoKKn36Bz5zUhcMAAAgAAAAIAAAACAAgAAgAEAAAAAAAAAIgIC+zpfQojN0RQ0AwXD8FhQljskX2TPELmbE5u2tstKXGEcqLRVVTAAAIAAAACAAAAAgAIAAIABAAAAAAAAAAAA'
     const signer1 = btc.Psbt.fromBase64(psbtText)
-
+    console.log('txinput hash: ', signer1.txInputs[0].hash.toString('hex'))
     const inputs = signer1.data.inputs
-    for (const input of inputs) {
-      console.log('nonWitnessUTXO: ', input.nonWitnessUtxo)
-      console.log('witnessScript: ', input.witnessScript)
-      console.log(signer1.data.inputs)
-      // console.log('witnessScript: ', btc.script.toStack(input.nonWitnessUtxo))
-    }
+    // console.log('fee: ', signer1.getFee())
+    // console.log('feeRate: ', signer1.getFeeRate())
+    // console.log('Inputs: ', JSON.stringify(inputs, null, 4))
+    console.log('Inputs-Outputs: ', JSON.stringify(inputsOutputs(signer1, btc.networks.testnet), null, 4))
+    // for (const input of inputs) {
+    // console.log('nonWitnessUTXO: ', input.nonWitnessUtxo)
+    // console.log('witnessScript: ', input.witnessScript)
 
-    const outputs = signer1.data.outputs
-    for (const output of outputs) {
-      console.log('pubkey: ', output)
-    }
+    // console.log('witnessUTXO Script: ', input.witnessUtxo.script)
+    // console.log('witnessUTXO value: ', input.witnessUtxo.value)
+    // console.log('witnessUTXO Script stack: ', btc.script.toStack(input.witnessUtxo.script)[1].toString('hex'))
+    // console.log('witnessUTXO Script hex: ', input.witnessUtxo.script.toString('hex'))
+    // console.log('witnessScript: ', btc.script.toStack(input.nonWitnessUtxo))
+
+    // }
+
+    // const outputs = signer1.data.outputs
+
+    // console.log('Outputs: ', JSON.stringify(outputs, null, 4))
+    // for (const output of outputs) {
+    //   console.log('redeemscript: ', output.redeemScript)
+    //   console.log('witnessscript: ', output.witnessScript)
+    //   // const node = bip32.fromBase58(output.bip32Derivation[0].pubkey.toString('base58'))
+    //   // console.log('node', node)
+    //   // const { address } = btc.payments.p2sh({
+    //   //   redeem: btc.payments.p2wsh({ pubkey: output.bip32Derivation[0].pubkey, network: btc.networks.testnet }),
+    //   //   network: btc.networks.testnet
+    //   // })
+    //   // console.log('address: ', address)
+    //   console.log('address: ', btc.payments.p2wsh({ output:output.}))
+    // }
+
+    // console.log('Signer: ', JSON.stringify(signer1, null, 4))
 
     console.log('master finger print: ', signer1.data.inputs[0].bip32Derivation[0].masterFingerprint.toString('hex'))
     console.log('path: ', signer1.data.inputs[0].bip32Derivation[0].path)
@@ -120,3 +142,31 @@ describe('Test Mnemonic functionality', () => {
     expect(signer1.toBase64()).not.toBe(signer2.toBase64())
   })
 })
+
+function inputsOutputs (psbt, network) {
+  const inputs = psbt.data.inputs.map((input, index) => {
+    if (input.witnessUtxo) {
+      return {
+        address: btc.address.fromOutputScript(input.witnessUtxo.script, network),
+        value: input.witnessUtxo.value
+      }
+    } else if (input.nonWitnessUtxo) {
+      const txin = psbt.txInputs[index]
+      const txout = btc.Transaction.fromBuffer(input.nonWitnessUtxo).outs[txin.index]
+      return {
+        address: btc.address.fromOutputScript(txout.script, network),
+        value: txout.value
+      }
+    } else {
+      throw new Error('Could not get input of #' + index)
+    }
+  })
+  const outputs = psbt.txOutputs.map(o => ({
+    address: btc.address.fromOutputScript(o.script, network),
+    value: o.value
+  }))
+  return {
+    inputs,
+    outputs
+  }
+}
