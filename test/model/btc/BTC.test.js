@@ -25,7 +25,8 @@ const expectedTrxInfo = {
       address: 'tb1qmlx2zr7ntxx2l4yjjgnu80lapnjanfuh49xj5q',
       value: 10000
     }
-  ]
+  ],
+  fee: 905
 }
 
 describe('Test BTC functionality', () => {

@@ -53,7 +53,40 @@ function createBTC ({
      */
     getTrxInfoFromPSBT (psbt) {
       this.assertIsUnlocked()
-      return _getTrxInfoFromPSBT(psbt, xkey.network)
+      const inputs = this.getTrxInputsFromPSBT(psbt)
+      const outputs = this.getTrxOutputsFromPSBT(psbt)
+      return {
+        inputs,
+        outputs,
+        fee: this._calculateFee(inputs, outputs)
+      }
+    },
+
+    getTrxInputsFromPSBT (psbt) {
+      return psbt.data.inputs.map((input, index) => {
+        if (input.witnessUtxo) {
+          return {
+            address: btc.address.fromOutputScript(input.witnessUtxo.script, xkey.network),
+            value: input.witnessUtxo.value
+          }
+        } else if (input.nonWitnessUtxo) {
+          const txin = psbt.txInputs[index]
+          const txout = btc.Transaction.fromBuffer(input.nonWitnessUtxo).outs[txin.index]
+          return {
+            address: btc.address.fromOutputScript(txout.script, xkey.network),
+            value: txout.value
+          }
+        } else {
+          throw new Error('Could not get input of #' + index)
+        }
+      })
+    },
+
+    getTrxOutputsFromPSBT (psbt) {
+      return psbt.txOutputs.map(o => ({
+        address: btc.address.fromOutputScript(o.script, xkey.network),
+        value: o.value
+      }))
     },
 
     /**
@@ -94,37 +127,17 @@ function createBTC ({
     },
     isUnlocked () {
       return !!xkey
+    },
+
+    _calculateFee (inputs, outputs) {
+      return this._sumUTXOs(inputs) - this._sumUTXOs(outputs)
+    },
+
+    _sumUTXOs (utxos) {
+      return utxos.reduce((sum, utxo) => sum + utxo.value, 0)
     }
 
   }
 }
 
 module.exports = createBTC
-
-function _getTrxInfoFromPSBT (psbt, network) {
-  const inputs = psbt.data.inputs.map((input, index) => {
-    if (input.witnessUtxo) {
-      return {
-        address: btc.address.fromOutputScript(input.witnessUtxo.script, network),
-        value: input.witnessUtxo.value
-      }
-    } else if (input.nonWitnessUtxo) {
-      const txin = psbt.txInputs[index]
-      const txout = btc.Transaction.fromBuffer(input.nonWitnessUtxo).outs[txin.index]
-      return {
-        address: btc.address.fromOutputScript(txout.script, network),
-        value: txout.value
-      }
-    } else {
-      throw new Error('Could not get input of #' + index)
-    }
-  })
-  const outputs = psbt.txOutputs.map(o => ({
-    address: btc.address.fromOutputScript(o.script, network),
-    value: o.value
-  }))
-  return {
-    inputs,
-    outputs
-  }
-}
