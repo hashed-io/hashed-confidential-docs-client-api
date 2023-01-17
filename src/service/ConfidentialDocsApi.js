@@ -53,6 +53,30 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
+  async createGroup ({ signer = null, group, name, publicKey, cid }) {
+    return this.callTx({
+      extrinsicName: 'createGroup',
+      signer,
+      params: [group, name, publicKey, cid]
+    })
+  }
+
+  async addGroupMember ({ signer = null, groupMember }) {
+    return this.callTx({
+      extrinsicName: 'addGroupMember',
+      signer,
+      params: [groupMember]
+    })
+  }
+
+  async removeGroupMember ({ signer = null, group, member }) {
+    return this.callTx({
+      extrinsicName: 'removeGroupMember',
+      signer,
+      params: [group, member]
+    })
+  }
+
   async findVault (userId) {
     const { value } = await this.exQuery('vaults', [userId])
     return value.toHuman()
@@ -172,6 +196,53 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     }
     const cids = await this.getSharedCIDs(address)
     return this.findSharedDocsByCIDs(cids)
+  }
+
+  async findGroup (groupId) {
+    const { value } = await this.exQuery('groups', [groupId])
+    return value.toHuman()
+  }
+
+  async getGroup (groupId) {
+    const group = await this.findGroup(groupId)
+    if (!group) {
+      throw new Error(`Group: ${groupId} does not exist`)
+    }
+    return group
+  }
+
+  async findGroupMember (groupId, memberId) {
+    const { value } = await this.exQuery('groupMembers', [groupId, memberId])
+    return value.toHuman()
+  }
+
+  async getGroupMember (groupId, memberId) {
+    const groupMember = await this.findGroupMember(groupId, memberId)
+    if (!groupMember) {
+      throw new Error(`No member: ${memberId} in group: ${groupId}`)
+    }
+    return groupMember
+  }
+
+  async getMemberGroupIds (memberId, subTrigger) {
+    const response = await this.exQuery('memberGroups', [memberId], subTrigger)
+    return subTrigger ? response : response.toHuman()
+  }
+
+  async findGroupsByIds (groupIds) {
+    groupIds = Array.isArray(groupIds) ? groupIds : [groupIds]
+    const response = await this.exMultiQuery('memberGroups', groupIds)
+    return response.map(r => r.toHuman())
+  }
+
+  async getMemberGroups (memberId, subTrigger) {
+    if (subTrigger) {
+      return this.getMemberGroupIds(memberId, async (groupIds) => {
+        subTrigger(await this.findGroupsByIds(groupIds))
+      })
+    }
+    const groupIds = await this.getMemberGroupIds(memberId)
+    return this.findGroupsByIds(groupIds)
   }
 
   async killStorage (signer) {
