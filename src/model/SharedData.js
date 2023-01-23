@@ -176,21 +176,23 @@ class SharedData extends BaseConfidentialData {
    * }
    * @throws error if the record is not found or if the logged in user is not the sharer/sharee of the data
    */
-  async viewByCID (cid) {
-    return this.view(await this.getByCID(cid))
+  async viewByCID (cid, actorAddress = null) {
+    return this.view(await this.getByCID(cid), actorAddress)
   }
 
-  async view (sharedData) {
+  async view (sharedData, actorAddress = null) {
     const {
       cid,
       to,
       from
     } = sharedData
+    actorAddress = actorAddress || this._address()
     const publicKey = await this._api().getPublicKey(to === this._address() ? from : to)
     const fullCipheredPayload = await this._ipfs.cat(cid)
     const payload = await this._cipher().decipherFrom({
       fullCipheredPayload,
-      publicKey
+      publicKey,
+      actorAddress
     })
     return {
       ...sharedData,
