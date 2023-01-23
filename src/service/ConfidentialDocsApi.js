@@ -53,11 +53,11 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async createGroup ({ signer = null, group, name, publicKey, cid }) {
+  async createGroup ({ signer = null, groupAddress, name, publicKey, cid }) {
     return this.callTx({
       extrinsicName: 'createGroup',
       signer,
-      params: [group, name, publicKey, cid]
+      params: [groupAddress, name, publicKey, cid]
     })
   }
 
@@ -69,11 +69,11 @@ class ConfidentialDocsApi extends BasePolkadotApi {
     })
   }
 
-  async removeGroupMember ({ signer = null, group, member }) {
+  async removeGroupMember ({ signer = null, groupAddress, memberAddress }) {
     return this.callTx({
       extrinsicName: 'removeGroupMember',
       signer,
-      params: [group, member]
+      params: [groupAddress, memberAddress]
     })
   }
 

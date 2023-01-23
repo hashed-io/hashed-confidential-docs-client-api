@@ -4,7 +4,6 @@ const bip39 = require('bip39')
 const { EventEmitter } = require('events')
 const { Keyring } = require('@polkadot/keyring')
 const { blake2AsHex, mnemonicGenerate } = require('@polkadot/util-crypto')
-const { Crypto } = require('@smontero/hashed-crypto')
 const { VaultWallet } = require('../model/wallet')
 const { createBTC, createXKey } = require('../model/btc')
 // const { LocalStorageKey } = require('../const')
@@ -25,12 +24,15 @@ class Vault extends EventEmitter {
     this._ipfs = ipfs
     this._faucet = faucet
     this._btcUseTestnet = btcUseTestnet
-    this._crypto = new Crypto()
     this._vault = null
     this._wallet = null
     this._docCipher = null
     this._btc = null
     this._actionConfirmer = actionConfirmer
+  }
+
+  setDocCipher (docCipher) {
+    this._docCipher = docCipher
   }
 
   /**
@@ -55,7 +57,12 @@ class Vault extends EventEmitter {
       publicKey,
       btcMnemonic
     } = vault
-    this._docCipher = _createDocCipher({ _this: this, privateKey, publicKey })
+    this._docCipher.setDefaultCipher({
+      address: this.getAddress(),
+      publicKey,
+      privateKey
+    })
+
     this._btc = createBTC({
       vault: this,
       xkey: await createXKey({
@@ -113,7 +120,6 @@ class Vault extends EventEmitter {
     }
     // this._vault = null
     this._wallet = null
-    this._docCipher = null
     this._btc = null
     this.emit('lock')
     // localStorage.removeItem(LocalStorageKey.VAULT_CONTEXT)
@@ -334,73 +340,6 @@ async function _getVault ({
     userId,
     vault,
     signer
-  }
-}
-
-function _createDocCipher ({
-  _this,
-  privateKey,
-  publicKey
-}) {
-  _this.once('lock', () => {
-    privateKey = null
-  })
-  const crypto = new Crypto()
-  return {
-    async cipher ({
-      payload
-    }) {
-      this.assertIsUnlocked()
-      return crypto.cipher({
-        payload,
-        privateKey
-      })
-    },
-    async decipher ({
-      fullCipheredPayload
-    }) {
-      this.assertIsUnlocked()
-      return crypto.decipher({
-        fullCipheredPayload,
-        privateKey
-      })
-    },
-
-    async cipherFor ({
-      payload,
-      publicKey
-    }) {
-      this.assertIsUnlocked()
-      return crypto.cipherShared({
-        payload,
-        privateKey,
-        publicKey
-      })
-    },
-
-    async decipherFrom ({
-      fullCipheredPayload,
-      publicKey
-    }) {
-      this.assertIsUnlocked()
-      return crypto.decipherShared({
-        fullCipheredPayload,
-        privateKey,
-        publicKey
-      })
-    },
-    getPublicKey () {
-      this.assertIsUnlocked()
-      return publicKey
-    },
-    assertIsUnlocked () {
-      if (!this.isUnlocked()) {
-        throw new Error('Document cipher is locked')
-      }
-    },
-    isUnlocked () {
-      return !!privateKey
-    }
   }
 }
 

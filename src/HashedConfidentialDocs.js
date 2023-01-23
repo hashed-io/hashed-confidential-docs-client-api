@@ -1,5 +1,5 @@
 const { ModalActionConfirmer } = require('./model/action-confirmer')
-const { OwnedData, SharedData, Vault } = require('./model')
+const { DocCipher, Group, OwnedData, SharedData, Vault } = require('./model')
 const { ConfidentialDocsApi, IPFS } = require('./service')
 
 /**
@@ -38,7 +38,16 @@ class HashedConfidentialDocs {
       actionConfirmer: new ModalActionConfirmer(),
       btcUseTestnet
     })
-
+    this._group = new Group({
+      confidentialDocsApi: this._confidentialDocsApi,
+      ipfs: this._ipfs,
+      vault: this._vault
+    })
+    const docCipher = new DocCipher({
+      vault: this._vault,
+      group: this._group
+    })
+    this._vault.setDocCipher(docCipher)
     this._ownedData = null
     this._sharedData = null
   }
@@ -102,6 +111,16 @@ class HashedConfidentialDocs {
   sharedData () {
     this._vault.assertIsUnlocked()
     return this._sharedData
+  }
+
+  /**
+   * @desc Returns the group object
+   *
+   * @return {Object} group object @see Group
+   */
+  group () {
+    this._vault.assertIsUnlocked()
+    return this._group
   }
 
   /**
