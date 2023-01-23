@@ -5,6 +5,7 @@ global.window = { addEventListener () {} }
 // global.document = {}
 const { blake2AsHex } = require('@polkadot/util-crypto')
 const { ConfidentialDocsApi } = require('../../src/service')
+const { GroupRole } = require('../../src/const')
 
 const Util = require('../support/Util')
 
@@ -12,6 +13,9 @@ let confidentialDocsApi = null
 let signer1 = null
 let signer2 = null
 let signer3 = null
+let groupSigner1 = null
+let groupSigner2 = null
+let groupSigner3 = null
 let polkadot = null
 const util = new Util()
 beforeEach(async () => {
@@ -22,6 +26,10 @@ beforeEach(async () => {
   signer1 = util.getKeypair('//Alice')
   signer2 = util.getKeypair('//Bob')
   signer3 = util.getKeypair('//Carlos')
+
+  groupSigner1 = util.getKeypair('//Group1')
+  groupSigner2 = util.getKeypair('//Group2')
+  groupSigner3 = util.getKeypair('//Group3')
   // console.log(signer1.address)
 })
 
@@ -290,6 +298,24 @@ describe('Test confidential docs pallet', () => {
     await unsub3()
     await unsub4()
   })
+
+  test('createGroup works', async () => {
+    await setVault(signer1, 1)
+    const groupDetails = getGroupDetails(signer1, groupSigner1, 1)
+
+    await confidentialDocsApi.createGroup(groupDetails)
+    const group = getGroupFromDetails(groupDetails)
+    const actualGroup = await confidentialDocsApi.getGroup(group.group)
+    expect(actualGroup).toEqual(group)
+    const groupMember = getGroupMemberFromDetails(groupDetails)
+    const actualGroupMember = await confidentialDocsApi.getGroupMember(groupMember.group, groupMember.member)
+    expect(actualGroupMember).toEqual(groupMember)
+    const actualMemberGroups = await confidentialDocsApi.getMemberGroupIds(groupMember.member)
+    console.log('MEMBERS: ', actualMemberGroups)
+    expect(actualMemberGroups).toEqual([group.group])
+    const actualPublicKey = await confidentialDocsApi.getPublicKey(group.group)
+    expect(actualPublicKey).toBe(groupDetails.publicKey)
+  })
 })
 
 function assertOwnedDoc (actual, expected) {
@@ -323,6 +349,42 @@ function getOwnedDoc (signer, id) {
     description: `desc ${id}`,
     cid: `cid ${id}`,
     owner: signer.address
+  }
+}
+
+function getGroupDetails (signer, groupSigner, id) {
+  return {
+    signer,
+    groupAddress: groupSigner.address,
+    name: `group ${id}`,
+    cid: `cid ${id}`,
+    publicKey: blake2AsHex(`public key ${id}`)
+  }
+}
+
+function getGroupFromDetails ({
+  name,
+  groupAddress,
+  signer
+}) {
+  return {
+    name,
+    group: groupAddress,
+    creator: signer.address
+  }
+}
+
+function getGroupMemberFromDetails ({
+  cid,
+  groupAddress,
+  signer
+}) {
+  return {
+    cid,
+    group: groupAddress,
+    authorizer: signer.address,
+    member: signer.address,
+    role: GroupRole.OWNER
   }
 }
 

@@ -6,7 +6,7 @@ global.window = { addEventListener () {} }
 global.File = class {}
 const { ActionType } = require('../../src/const')
 const { LocalAccountFaucet } = require('../../src/model/faucet')
-const { Vault } = require('../../src/model')
+const { Vault, DocCipher, Group } = require('../../src/model')
 const { PredefinedActionConfirmer } = require('../../src/model/action-confirmer')
 const { BalancesApi, ConfidentialDocsApi, Polkadot } = require('../../src/service')
 const Util = require('../support/Util')
@@ -27,13 +27,24 @@ beforeEach(async () => {
     signer: util.getKeypair('//Alice'),
     amount: 1000000000
   })
+  const ipfs = util.setupIPFS()
   vault = new Vault({
     polkadot,
     confidentialDocsApi,
-    ipfs: util.setupIPFS(),
+    ipfs,
     faucet,
     actionConfirmer
   })
+  const group = new Group({
+    confidentialDocsApi,
+    ipfs,
+    vault
+  })
+  const docCipher = new DocCipher({
+    vault,
+    group
+  })
+  vault.setDocCipher(docCipher)
 
   // vault._generateMnemonic = jest.fn()
 
@@ -83,7 +94,7 @@ describe('vault lock/unlock', () => {
 
     await vault.unlock(authProvider)
     expect(vault.isUnlocked()).toBe(true)
-    expect(docCipher.isUnlocked()).toBe(false)
+    expect(docCipher.isUnlocked()).toBe(true)
     expect(btc.isUnlocked()).toBe(false)
     expect(wallet.isUnlocked()).toBe(false)
     docCipher = vault.getDocCipher()

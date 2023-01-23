@@ -65,6 +65,10 @@ class DocCipher {
     })
   }
 
+  isUnlocked () {
+    return this._defaultCipher != null
+  }
+
   /**
    * @desc Sets the default cipher
    *
@@ -105,7 +109,7 @@ class DocCipher {
   }
 
   generateKeyPair () {
-    this._crypto.generateKeyPair()
+    return this._crypto.generateKeyPair()
   }
 
   hasCipher (address) {

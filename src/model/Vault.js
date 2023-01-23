@@ -205,7 +205,7 @@ class Vault extends EventEmitter {
     let requiresPatching = false
     vault = vault || {}
     if (!vault.privateKey) {
-      const { privateKey, publicKey } = this._crypto.generateKeyPair()
+      const { privateKey, publicKey } = this._docCipher.generateKeyPair()
       vault = {
         ...vault,
         privateKey,

@@ -231,7 +231,7 @@ class ConfidentialDocsApi extends BasePolkadotApi {
 
   async findGroupsByIds (groupIds) {
     groupIds = Array.isArray(groupIds) ? groupIds : [groupIds]
-    const response = await this.exMultiQuery('memberGroups', groupIds)
+    const response = await this.exMultiQuery('groups', groupIds)
     return response.map(r => r.toHuman())
   }
 
