@@ -52,7 +52,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       this._cancelBtn = this._getModalElement('hcd-modal-cancel-btn')
       this._confirmBtn = this._getModalElement('hcd-modal-confirm-btn')
     }
-    console.log('_showModal', { content })
+
     this._content.innerHTML = this._renderConfirmationDetails(content)
     this._cancelBtn.onclick = () => {
       this._hide()
@@ -135,9 +135,6 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       `
     }
 
-    console.log('params', params)
-    console.log('docs', docs, docsHtml)
-    console.log('params', params, paramsHtml)
     return `
       <div>
           <div class="hcd-content-params-container">
