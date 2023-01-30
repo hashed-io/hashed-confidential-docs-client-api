@@ -1,4 +1,5 @@
 const BaseActionConfirmer = require('./BaseActionConfirmer')
+const ActionTypes = require('./../../const/ActionType')
 
 const modalHtml = `
 <div class="hcd-modal" id="hcdModalContainer">
@@ -51,6 +52,7 @@ class ModalActionConfirmer extends BaseActionConfirmer {
       this._cancelBtn = this._getModalElement('hcd-modal-cancel-btn')
       this._confirmBtn = this._getModalElement('hcd-modal-confirm-btn')
     }
+    console.log('_showModal', { content })
     this._content.innerHTML = this._renderConfirmationDetails(content)
     this._cancelBtn.onclick = () => {
       this._hide()
@@ -76,38 +78,66 @@ class ModalActionConfirmer extends BaseActionConfirmer {
   }
 
   _renderConfirmationDetails (content) {
+    const { payload, actionType } = content // actionType also can be destructured
     const {
       palletName,
       extrinsicName,
       params,
       address,
-      payload,
       docs
-    } = content
-    const isSigningMessage = !!payload
+    } = payload
+    // const isSigningMessage = !!payload
     const modalTitle = this._getModalElement('hcd-modal-title-header')
-    if (isSigningMessage) {
-      modalTitle.innerHTML = 'Sign message'
+
+    // Params
+    let paramsHtml
+    let docsHtml
+
+    if (actionType === ActionTypes.SIGN_PAYLOAD) {
+      modalTitle.innerHTML = 'Sign Payload'
       return `
-          <div>
-            <div class="hcd-content-params-container">
-                <p class="hcd-label-name">Address:</p>
-                <p class="hcd-label-value">${address}</p>
-            </div>
-            <div class="hcd-content-params-container">
-                <p class="hcd-label-name">Payload:</p>
-                <div class="hcd-content-params-viewer">
-                    ${payload}
-                </div>
-            </div>
-        </div>
-        `
+      <div>
+          <div class="hcd-content-params-container">
+              <p class="hcd-label-name">Address:</p>
+              <p class="hcd-label-value">${address}</p>
+          </div>
+          <div class="hcd-content-params-container">
+              <p class="hcd-label-name">Payload:</p>
+              <p class="hcd-label-value">${payload.payload}</p>
+          </div>
+          </div>
+      </div>
+      `
+    } else if (actionType === ActionTypes.CALL_EXTRINSIC) {
+      modalTitle.innerHTML = 'Call extrinsic'
+      paramsHtml = this._renderParams(params)
+      docsHtml = this._renderDocs(docs)
+    } else if (actionType === ActionTypes.SIGN_PSBT) {
+      modalTitle.innerHTML = 'Sign PSBT'
+      // paramsHtml = this._renderParams(params)
+      // docsHtml = this._renderDocs(docs)
+      return `
+      <div>
+          <div class="hcd-content-params-container">
+              <p class="hcd-label-name">Fee:</p>
+              <p class="hcd-label-value">${payload.fee} Sats</p>
+          </div>
+          <div class="hcd-content-params-container">
+              <p class="hcd-label-name">Inputs:</p>
+              ${this._renderPsbtParams(payload.inputs)}
+          </div>
+          <div class="hcd-content-params-container">
+              <p class="hcd-label-name">Outputs:</p>
+              ${this._renderPsbtParams(payload.outputs)}
+          </div>
+          </div>
+      </div>
+      `
     }
-    const paramsHtml = this._renderParams(params)
-    const docsHtml = this._renderDocs(docs)
+
+    console.log('params', params)
     console.log('docs', docs, docsHtml)
     console.log('params', params, paramsHtml)
-    modalTitle.innerHTML = 'Confirm action'
     return `
       <div>
           <div class="hcd-content-params-container">
@@ -148,7 +178,18 @@ class ModalActionConfirmer extends BaseActionConfirmer {
     return html
   }
 
+  _renderPsbtParams (params) {
+    if (params.length <= 0) return ''
+    let html = ''
+    params.forEach(param => {
+      html += `<p class="hcd-label-name" style="text-decoration: underline !important; color: black !important">Address: ${param.address}</p>
+        <p class="hcd-label-value" style="margin-bottom: 10px !important">${JSON.stringify(param.value)} Sats</p>`
+    })
+    return html
+  }
+
   _renderDocs (docs) {
+    // eslint-disable-next-line no-undef
     const converter = new showdown.Converter()
     if (docs.length <= 0) return ''
     let html = ''
