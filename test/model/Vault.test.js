@@ -1,5 +1,5 @@
 
-jest.setTimeout(30000)
+jest.setTimeout(70000)
 
 global.window = { addEventListener () {} }
 // global.document = {}

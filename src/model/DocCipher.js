@@ -65,6 +65,12 @@ class DocCipher {
     })
   }
 
+  async getPublicKey (actorAddress = null) {
+    const cipher = await this._getCipher(actorAddress)
+    console.log('Getting public Key')
+    return cipher.getPublicKey()
+  }
+
   isUnlocked () {
     return this._defaultCipher != null
   }
@@ -95,13 +101,13 @@ class DocCipher {
       return this._defaultCipher
     }
     if (!this.hasCipher(groupAddress)) {
-      const groupMember = await this._group.getGroupMemberWithPayload(groupAddress, this._vault.getAddress())
-      const payload = await this._cipher().decipherFrom({
+      const groupMember = await this._group.getGroupMemberDecorated(groupAddress, this._vault.getAddress())
+      const payload = await this._defaultCipher.decipherFrom({
         fullCipheredPayload: groupMember.cipheredPayload,
         publicKey: groupMember.authorizerPublicKey
       })
       this._setCipher({
-        groupAddress,
+        address: groupAddress,
         ...payload
       })
     }
@@ -178,6 +184,9 @@ function createCipher ({
       publicKey
     }) {
       this.assertIsUnlocked()
+      console.log('payload: ', fullCipheredPayload)
+      console.log('publicKey: ', publicKey)
+      console.log('privateKey: ', privateKey)
       return crypto.decipherShared({
         fullCipheredPayload,
         privateKey,

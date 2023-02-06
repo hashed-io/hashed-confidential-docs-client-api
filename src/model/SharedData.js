@@ -187,7 +187,7 @@ class SharedData extends BaseConfidentialData {
       from
     } = sharedData
     actorAddress = actorAddress || this._address()
-    const publicKey = await this._api().getPublicKey(to === this._address() ? from : to)
+    const publicKey = await this._api().getPublicKey(to === actorAddress ? from : to)
     const fullCipheredPayload = await this._ipfs.cat(cid)
     const payload = await this._cipher().decipherFrom({
       fullCipheredPayload,

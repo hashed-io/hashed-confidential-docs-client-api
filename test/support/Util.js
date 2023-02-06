@@ -1,7 +1,9 @@
 const find = require('find-process')
 const sleep = require('await-sleep')
+const { blake2AsHex } = require('@polkadot/util-crypto')
 const { spawn } = require('node:child_process')
 const { Keyring } = require('@polkadot/keyring')
+const { GroupRole } = require('../../src/const')
 const { createPasswordVaultAuthProvider, BaseJWTVaultAuthProvider } = require('../../src/model/auth-providers')
 const { IPFS, Polkadot } = require('../../src/service')
 
@@ -147,6 +149,42 @@ class Util {
     return {
       sub: `1232323#${id}`,
       email: `test${id}@test.com`
+    }
+  }
+
+  getGroupDetails (signer, groupSigner, id) {
+    return {
+      signer,
+      groupAddress: groupSigner.address,
+      name: `group ${id}`,
+      cid: `cid ${id}`,
+      publicKey: blake2AsHex(`public key ${id}`)
+    }
+  }
+
+  getGroupFromDetails ({
+    name,
+    groupAddress,
+    signer
+  }) {
+    return {
+      name,
+      group: groupAddress,
+      creator: signer.address
+    }
+  }
+
+  getGroupMemberFromDetails ({
+    cid,
+    groupAddress,
+    signer
+  }) {
+    return {
+      cid,
+      group: groupAddress,
+      authorizer: signer.address,
+      member: signer.address,
+      role: GroupRole.OWNER
     }
   }
 }

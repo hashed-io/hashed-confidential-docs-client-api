@@ -137,9 +137,10 @@ class Group extends BaseConfidentialData {
    */
   async createGroup (name) {
     const groupAddress = generateNewGroupAddress()
-    const keyPair = this._vault._crypto.generateKeyPair()
+    const keyPair = this._vault._docCipher.generateKeyPair()
     const { publicKey } = keyPair
-    const cipheredPayload = await this._cipher().cipherFor({ payload: keyPair, publicKey })
+    const cipheredPayload = await this._cipher().cipherFor({ payload: keyPair, publicKey: await this._cipher().getPublicKey() })
+    // const cipheredPayload = ''
     const cid = await this._ipfs.add(cipheredPayload)
     await this._api().createGroup({
       groupAddress,
@@ -176,7 +177,7 @@ class Group extends BaseConfidentialData {
       publicKey: groupMember.authorizerPublicKey
     })
     const memberPublicKey = await this._api().getPublicKey(memberAddress)
-    const cipheredPayload = await this._cipher().cipherFor({ payload, memberPublicKey })
+    const cipheredPayload = await this._cipher().cipherFor({ payload, publicKey: memberPublicKey })
     const cid = await this._ipfs.add(cipheredPayload)
     return this._api().addGroupMember({
       groupMember: {
@@ -209,7 +210,7 @@ class Group extends BaseConfidentialData {
   }
 
   assertCanManageUsers (groupMember) {
-    if (groupMember.role !== 'Owner' || groupMember.role !== 'Admin') {
+    if (groupMember.role !== 'Owner' && groupMember.role !== 'Admin') {
       throw new Error(`You are not allowed to manage members for group: ${groupMember.group}`)
     }
   }

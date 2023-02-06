@@ -1,12 +1,12 @@
 
 jest.setTimeout(70000)
 
-global.window = { addEventListener() { } }
+global.window = { addEventListener () { } }
 // global.document = {}
 const { blake2AsHex } = require('@polkadot/util-crypto')
 const { ConfidentialDocsApi } = require('../../src/service')
-const { GroupRole } = require('../../src/const')
 
+const { GroupRole } = require('../../src/const')
 const Util = require('../support/Util')
 
 let confidentialDocsApi = null
@@ -301,13 +301,13 @@ describe('Test confidential docs pallet', () => {
 
   test('createGroup works', async () => {
     await setVault(signer1, 1)
-    const groupDetails = getGroupDetails(signer1, groupSigner1, 1)
+    const groupDetails = util.getGroupDetails(signer1, groupSigner1, 1)
 
     await confidentialDocsApi.createGroup(groupDetails)
-    const group = getGroupFromDetails(groupDetails)
+    const group = util.getGroupFromDetails(groupDetails)
     const actualGroup = await confidentialDocsApi.getGroup(group.group)
     expect(actualGroup).toEqual(group)
-    const groupMember = getGroupMemberFromDetails(groupDetails)
+    const groupMember = util.getGroupMemberFromDetails(groupDetails)
     const actualGroupMember = await confidentialDocsApi.getGroupMember(groupMember.group, groupMember.member)
     expect(actualGroupMember).toEqual(groupMember)
     const actualMemberGroups = await confidentialDocsApi.getMemberGroupIds(groupMember.member)
@@ -319,9 +319,9 @@ describe('Test confidential docs pallet', () => {
   test('addGroupMember / removeGroupMember works', async () => {
     await setVault(signer1, 1)
     await setVault(signer2, 2)
-    const groupDetails = getGroupDetails(signer1, groupSigner1, 1)
+    const groupDetails = util.getGroupDetails(signer1, groupSigner1, 1)
 
-    const group = getGroupFromDetails(groupDetails)
+    const group = util.getGroupFromDetails(groupDetails)
     await confidentialDocsApi.createGroup(groupDetails)
     const actualGroup = await confidentialDocsApi.getGroup(group.group)
     expect(actualGroup).toEqual(group)
@@ -344,14 +344,14 @@ describe('Test confidential docs pallet', () => {
   })
 })
 
-function assertOwnedDoc(actual, expected) {
+function assertOwnedDoc (actual, expected) {
   expect(actual.cid).toEqual(expected.cid)
   expect(actual.name).toEqual(expected.name)
   expect(actual.description).toEqual(expected.description)
   expect(actual.owner).toEqual(expected.owner)
 }
 
-function assertSharedDoc(actual, expected) {
+function assertSharedDoc (actual, expected) {
   expect(actual.cid).toEqual(expected.cid)
   expect(actual.name).toEqual(expected.name)
   expect(actual.description).toEqual(expected.description)
@@ -359,7 +359,7 @@ function assertSharedDoc(actual, expected) {
   expect(actual.to).toEqual(expected.to)
 }
 
-async function setVault(signer, id) {
+async function setVault (signer, id) {
   const vault = {
     signer,
     userId: blake2AsHex(`userid${id}`),
@@ -369,7 +369,7 @@ async function setVault(signer, id) {
   await confidentialDocsApi.setVault(vault)
 }
 
-function getOwnedDoc(signer, id) {
+function getOwnedDoc (signer, id) {
   return {
     name: `name ${id}`,
     description: `desc ${id}`,
@@ -378,43 +378,7 @@ function getOwnedDoc(signer, id) {
   }
 }
 
-function getGroupDetails(signer, groupSigner, id) {
-  return {
-    signer,
-    groupAddress: groupSigner.address,
-    name: `group ${id}`,
-    cid: `cid ${id}`,
-    publicKey: blake2AsHex(`public key ${id}`)
-  }
-}
-
-function getGroupFromDetails({
-  name,
-  groupAddress,
-  signer
-}) {
-  return {
-    name,
-    group: groupAddress,
-    creator: signer.address
-  }
-}
-
-function getGroupMemberFromDetails({
-  cid,
-  groupAddress,
-  signer
-}) {
-  return {
-    cid,
-    group: groupAddress,
-    authorizer: signer.address,
-    member: signer.address,
-    role: GroupRole.OWNER
-  }
-}
-
-function getSharedDoc(signerFrom, signerTo, id) {
+function getSharedDoc (signerFrom, signerTo, id) {
   return {
     name: `name ${id}`,
     description: `desc ${id}`,
@@ -424,7 +388,7 @@ function getSharedDoc(signerFrom, signerTo, id) {
   }
 }
 
-async function setOwnedDoc(signer, id) {
+async function setOwnedDoc (signer, id) {
   const ownedDoc = getOwnedDoc(signer, id)
   await confidentialDocsApi.setOwnedDoc({
     signer,
@@ -433,7 +397,7 @@ async function setOwnedDoc(signer, id) {
   return ownedDoc
 }
 
-async function setSharedDoc(signerFrom, signerTo, id) {
+async function setSharedDoc (signerFrom, signerTo, id) {
   const sharedDoc = getSharedDoc(signerFrom, signerTo, id)
   await confidentialDocsApi.sharedDoc({
     signer: signerFrom,

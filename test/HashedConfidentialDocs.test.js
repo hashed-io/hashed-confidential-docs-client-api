@@ -1,11 +1,12 @@
 jest.setTimeout(50000)
-global.window = { addEventListener () {} }
-global.File = class {}
+global.window = { addEventListener () { } }
+global.File = class { }
 const { HashedConfidentialDocs } = require('../src')
 const { LocalAccountFaucet } = require('../src/model/faucet')
 const { PredefinedActionConfirmer } = require('../src/model/action-confirmer')
 const { BalancesApi, Polkadot } = require('../src/service')
 const Util = require('./support/Util')
+const { GroupRole } = require('../src/const')
 
 let hcd = null
 let polkadot = null
@@ -14,14 +15,14 @@ const util = new Util()
 beforeEach(async () => {
   await util.restartNode()
   polkadot = await util.setupPolkadot()
-  polkadot.setWeb3Signer = async function () {}
+  polkadot.setWeb3Signer = async function () { }
   faucet = new LocalAccountFaucet({
-    balancesApi: new BalancesApi(new Polkadot({ api: polkadot._api }), () => {}),
+    balancesApi: new BalancesApi(new Polkadot({ api: polkadot._api }), () => { }),
     signer: util.getKeypair('//Alice'),
     amount: 1000000000
   })
   hcd = newHashedConfidentialDocsInstance()
-  hcd._polkadot.setWeb3Signer = async function () {}
+  hcd._polkadot.setWeb3Signer = async function () { }
 })
 
 afterEach(async () => {
@@ -149,6 +150,61 @@ describe('HashedConfidentialDocs Integration Tests', () => {
     actual = await hcd.sharedData().viewByCID(expected.cid)
     assertSharedData(actual, expected)
     expect(actual.payload).toEqual(expected.payload)
+  })
+
+  test('Share data with group and view', async () => {
+    const { authProvider: vaultAuthProvider1 } = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider: vaultAuthProvider2 } = await util.getPasswordVaultAuthProvider(2)
+    await login(vaultAuthProvider1)
+    const memberAddress = hcd.address()
+    await logout()
+    await login(vaultAuthProvider2)
+    const group = await hcd.group().createGroup('test1')
+    const expected = getSharedDoc(2, group.group)
+    let actual = await hcd.sharedData().share(expected)
+    expected.from = hcd.address()
+    expected.to = group.group
+    expected.cid = actual.cid
+    assertSharedData(actual, expected)
+    actual = await hcd.sharedData().view(expected)
+    assertSharedData(actual, expected)
+    expect(actual.payload).toEqual(expected.payload)
+    await hcd.group().addGroupMember({
+      groupAddress: group.group,
+      memberAddress,
+      role: GroupRole.MEMBER
+    })
+    await logout()
+    await login(vaultAuthProvider1)
+    actual = await hcd.sharedData().view(expected, group.group)
+    assertSharedData(actual, expected)
+    expect(actual.payload).toEqual(expected.payload)
+  })
+
+  test('Should fail for non group memeber viewing doc shared with group', async () => {
+    expect.assertions(20)
+    const { authProvider: vaultAuthProvider1 } = await util.getPasswordVaultAuthProvider(1)
+    const { authProvider: vaultAuthProvider2 } = await util.getPasswordVaultAuthProvider(2)
+    await login(vaultAuthProvider1)
+    await logout()
+    await login(vaultAuthProvider2)
+    const group = await hcd.group().createGroup('test1')
+    const expected = getSharedDoc(2, group.group)
+    let actual = await hcd.sharedData().share(expected)
+    expected.from = hcd.address()
+    expected.to = group.group
+    expected.cid = actual.cid
+    assertSharedData(actual, expected)
+    actual = await hcd.sharedData().view(expected)
+    assertSharedData(actual, expected)
+    expect(actual.payload).toEqual(expected.payload)
+    await logout()
+    await login(vaultAuthProvider1)
+    try {
+      await hcd.sharedData().view(expected, group.group)
+    } catch (err) {
+      expect(err.message).toContain('No member:')
+    }
   })
 
   test('Should fail for non owner trying to view shared data', async () => {
