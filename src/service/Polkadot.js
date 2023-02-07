@@ -131,10 +131,15 @@ class Polkadot {
       palletName,
       extrinsicName
     }).args
-    if (params.length !== args.length) {
+
+    const paramsLength = params ? params.length : 0
+    if (paramsLength !== args.length) {
       throw new Error(`Invalid extrinsic params array, number of parameters does not match the number of parameters the extrinsic: ${palletName}:${extrinsicName} receives, found: ${params.length} actual: ${args.length}`)
     }
-    return params.map((value, i) => ({ name: args[i].name.toHuman(), value }))
+    if (!params) {
+      return [{ name: 'This extrinsic does not need params', value: '' }]
+    }
+    return params?.map((value, i) => ({ name: args[i].name.toHuman(), value }))
   }
 
   /**
