@@ -63,23 +63,31 @@ function createBTC ({
     },
 
     getTrxInputsFromPSBT (psbt) {
-      return psbt.data.inputs.map((input, index) => {
+      const inputs = []
+      psbt.data.inputs.forEach((input, index) => {
         if (input.witnessUtxo) {
-          return {
-            address: btc.address.fromOutputScript(input.witnessUtxo.script, xkey.network),
-            value: input.witnessUtxo.value
+          try {
+            inputs.push({
+              address: btc.address.fromOutputScript(input.witnessUtxo.script, xkey.network),
+              value: input.witnessUtxo.value
+            })
+          } catch (err) {
+            if (!err.message.includes('OP_1 has no matching Address')) {
+              throw err
+            }
           }
         } else if (input.nonWitnessUtxo) {
           const txin = psbt.txInputs[index]
           const txout = btc.Transaction.fromBuffer(input.nonWitnessUtxo).outs[txin.index]
-          return {
+          inputs.push({
             address: btc.address.fromOutputScript(txout.script, xkey.network),
             value: txout.value
-          }
+          })
         } else {
           throw new Error('Could not get input of #' + index)
         }
       })
+      return inputs
     },
 
     getTrxOutputsFromPSBT (psbt) {

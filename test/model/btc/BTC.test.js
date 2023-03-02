@@ -7,8 +7,10 @@ const { ActionType } = require('../../../src/const')
 const { PredefinedActionConfirmer } = require('../../../src/model/action-confirmer')
 const { createBTC, createXKey } = require('../../../src/model/btc')
 const VaultMock = require('../../support/VaultMock')
+const bip39 = require('bip39')
 
 const psbtText = 'cHNidP8BAH0BAAAAAdXuu3IED9S60Omnf/WHLT+J8qrhpYogZ74/weQP3wYtAAAAAAD9////ApdKAAAAAAAAIgAgVgpgVYN7cpdeGpYqj/SqPJ9xSRC/NfCV1WBN9a6PjcAQJwAAAAAAABYAFN/MoQ/TWYyv1JKSJ8O//Qzl2aeXAAAAAAABAOoCAAAAAAEBpD4rrrXl2igLagnrYYoFg7eHapxeOhJn4FlsvVaF9KAAAAAAAP7///8CMHUAAAAAAAAiACAKskUgXIRuFNk+kXVu0ROvvrP6eoH0mdb/JazQsruP5PiISgAAAAAAFgAUNAY1ixp3MRBepRuRYLdXa6r6jeQCRzBEAiBnLFY6GsOYaE0jOnUPPabL62WJDhuTQgYUB8XOShMdbgIgFoiB4ntE9FEtfUZzlnCMBh91liI1ffBYyCOQwSx+ZWYBIQKRXTNQp5ekscMjVNhM5ya7vCem67bFjmzuByZ33RAGsYdJJAABASswdQAAAAAAACIAIAqyRSBchG4U2T6RdW7RE6++s/p6gfSZ1v8lrNCyu4/kAQVHUiECU2CGOnnwKuB1Yjadth7xInlcMd/A9NjrNDJbXVUdkBchAzL0FNWhnvnH1VRk4m5VNNQg+YlFWeUdEzd7yxHxGyLZUq4iBgJTYIY6efAq4HViNp22HvEieVwx38D02Os0MltdVR2QFxz5zUhcMAAAgAAAAIAAAACAAgAAgAAAAAAAAAAAIgYDMvQU1aGe+cfVVGTiblU01CD5iUVZ5R0TN3vLEfEbItkcqLRVVTAAAIAAAACAAAAAgAIAAIAAAAAAAAAAAAAiAgKXkSekytkdeEL5hKx9yHbmVYxTnwACtpyPIYSoKKn36Bz5zUhcMAAAgAAAAIAAAACAAgAAgAEAAAAAAAAAIgIC+zpfQojN0RQ0AwXD8FhQljskX2TPELmbE5u2tstKXGEcqLRVVTAAAIAAAACAAAAAgAIAAIABAAAAAAAAAAAA'
+const psbtTextProofOfReserves = 'cHNidP8BAH4BAAAAAjx+p9IScTIVUfwP4IBDCp0YJc1nymOpQgY/76bYAs4uAAAAAAD/////EUtq5va31PMFnO7KlmVlZg13hOlHUCPUzRfILZU34MMAAAAAAP////8BcBcAAAAAAAAZdqkUn3/QltN+0sDj9/DPySS+70/862iIrAAAAAAAAQEKAAAAAAAAAAABUQEHAAABAStwFwAAAAAAACIAIA3RBg8cYhzXFTMZ3W9SSk3+g6ouWSM0JbEoaFZFJ/IpAQVHUiECk77SigeqOfY7GfgVe2ShQIJP5V/QFMv3O3l2y/l+Hf0hA1Lh6Fq2wOSihK0Imxe6+/5v5P46bI/qe03Wy+OPcrzFUq4iBgKTvtKKB6o59jsZ+BV7ZKFAgk/lX9AUy/c7eXbL+X4d/QygHVM3AAAAAAAAAAAiBgNS4ehatsDkooStCJsXuvv+b+T+OmyP6ntN1svjj3K8xQyoqdGSAAAAAAAAAAAAAA=='
 const expectedTrxInfo = {
   inputs: [
     {
@@ -29,20 +31,43 @@ const expectedTrxInfo = {
   fee: 905
 }
 
+const expectedTrxInfoProofOfReserves = {
+  inputs: [
+    {
+      address: 'tb1qphgsvrcuvgwdw9fnr8wk75j2fhlg823wty3ngfd39p59v3f87g5s39m8rm',
+      value: 6000
+    }
+  ],
+  outputs: [{ address: 'mv4JrHNmh1dY6ZfEy7zbAmhEc3Dyr8ULqX', value: 6000 }],
+  fee: 0
+}
+
+const mnemonic1 = 'over whip setup elephant program cost absurd around myth twist discover raw'
+const mnemonic2 = 'print win thumb long book carbon spy happy hockey two charge law'
+
 describe('Test BTC functionality', () => {
+  // test('generate mnemonics', () => {
+  //   console.log('mnemonic: ', bip39.generateMnemonic())
+  // })
   test('Get PSBT Trx Info', async () => {
-    const mnemonic = 'over whip setup elephant program cost absurd around myth twist discover raw'
     const { btc } = await setupBTC({
-      mnemonic
+      mnemonic: mnemonic1
     })
     const trxInfo = await btc.getTrxInfoFromPSBTText(psbtText)
 
     expect(trxInfo).toEqual(expectedTrxInfo)
   })
+  test('Get PSBT Proof of Reserves Trx Info', async () => {
+    const { btc } = await setupBTC({
+      mnemonic: mnemonic1
+    })
+    const trxInfo = await btc.getTrxInfoFromPSBTText(psbtTextProofOfReserves)
+    console.log('trxInfo:', trxInfo)
+    expect(trxInfo).toEqual(expectedTrxInfoProofOfReserves)
+  })
   test('Sign PSBT', async () => {
-    const mnemonic = 'over whip setup elephant program cost absurd around myth twist discover raw'
     const { actionConfirmer, btc } = await setupBTC({
-      mnemonic
+      mnemonic: mnemonic1
     })
     const confirmActionSpy = jest.spyOn(actionConfirmer, 'confirm')
     const signedPsbtText = 'cHNidP8BAH0BAAAAAdXuu3IED9S60Omnf/WHLT+J8qrhpYogZ74/weQP3wYtAAAAAAD9////ApdKAAAAAAAAIgAgVgpgVYN7cpdeGpYqj/SqPJ9xSRC/NfCV1WBN9a6PjcAQJwAAAAAAABYAFN/MoQ/TWYyv1JKSJ8O//Qzl2aeXAAAAAAABAOoCAAAAAAEBpD4rrrXl2igLagnrYYoFg7eHapxeOhJn4FlsvVaF9KAAAAAAAP7///8CMHUAAAAAAAAiACAKskUgXIRuFNk+kXVu0ROvvrP6eoH0mdb/JazQsruP5PiISgAAAAAAFgAUNAY1ixp3MRBepRuRYLdXa6r6jeQCRzBEAiBnLFY6GsOYaE0jOnUPPabL62WJDhuTQgYUB8XOShMdbgIgFoiB4ntE9FEtfUZzlnCMBh91liI1ffBYyCOQwSx+ZWYBIQKRXTNQp5ekscMjVNhM5ya7vCem67bFjmzuByZ33RAGsYdJJAABASswdQAAAAAAACIAIAqyRSBchG4U2T6RdW7RE6++s/p6gfSZ1v8lrNCyu4/kIgICU2CGOnnwKuB1Yjadth7xInlcMd/A9NjrNDJbXVUdkBdIMEUCIQDAALZ64VX2Fm7PdNaTAfu/K8t/7qwZWdIMXeBPKDwmZgIgeRiQcEgCKFuSw1KNZxaUAm+Tq8gwkSoXCglwV6tiq8ABAQVHUiECU2CGOnnwKuB1Yjadth7xInlcMd/A9NjrNDJbXVUdkBchAzL0FNWhnvnH1VRk4m5VNNQg+YlFWeUdEzd7yxHxGyLZUq4iBgJTYIY6efAq4HViNp22HvEieVwx38D02Os0MltdVR2QFxz5zUhcMAAAgAAAAIAAAACAAgAAgAAAAAAAAAAAIgYDMvQU1aGe+cfVVGTiblU01CD5iUVZ5R0TN3vLEfEbItkcqLRVVTAAAIAAAACAAAAAgAIAAIAAAAAAAAAAAAAiAgKXkSekytkdeEL5hKx9yHbmVYxTnwACtpyPIYSoKKn36Bz5zUhcMAAAgAAAAIAAAACAAgAAgAEAAAAAAAAAIgIC+zpfQojN0RQ0AwXD8FhQljskX2TPELmbE5u2tstKXGEcqLRVVTAAAIAAAACAAAAAgAIAAIABAAAAAAAAAAAA'
@@ -57,11 +82,28 @@ describe('Test BTC functionality', () => {
     expect.any(Function),
     expect.any(Function))
   })
+
+  test('Sign PSBT proof of reserves', async () => {
+    const { actionConfirmer, btc } = await setupBTC({
+      mnemonic: mnemonic1
+    })
+    const confirmActionSpy = jest.spyOn(actionConfirmer, 'confirm')
+    const signedPsbtText = 'cHNidP8BAH0BAAAAAdXuu3IED9S60Omnf/WHLT+J8qrhpYogZ74/weQP3wYtAAAAAAD9////ApdKAAAAAAAAIgAgVgpgVYN7cpdeGpYqj/SqPJ9xSRC/NfCV1WBN9a6PjcAQJwAAAAAAABYAFN/MoQ/TWYyv1JKSJ8O//Qzl2aeXAAAAAAABAOoCAAAAAAEBpD4rrrXl2igLagnrYYoFg7eHapxeOhJn4FlsvVaF9KAAAAAAAP7///8CMHUAAAAAAAAiACAKskUgXIRuFNk+kXVu0ROvvrP6eoH0mdb/JazQsruP5PiISgAAAAAAFgAUNAY1ixp3MRBepRuRYLdXa6r6jeQCRzBEAiBnLFY6GsOYaE0jOnUPPabL62WJDhuTQgYUB8XOShMdbgIgFoiB4ntE9FEtfUZzlnCMBh91liI1ffBYyCOQwSx+ZWYBIQKRXTNQp5ekscMjVNhM5ya7vCem67bFjmzuByZ33RAGsYdJJAABASswdQAAAAAAACIAIAqyRSBchG4U2T6RdW7RE6++s/p6gfSZ1v8lrNCyu4/kIgICU2CGOnnwKuB1Yjadth7xInlcMd/A9NjrNDJbXVUdkBdIMEUCIQDAALZ64VX2Fm7PdNaTAfu/K8t/7qwZWdIMXeBPKDwmZgIgeRiQcEgCKFuSw1KNZxaUAm+Tq8gwkSoXCglwV6tiq8ABAQVHUiECU2CGOnnwKuB1Yjadth7xInlcMd/A9NjrNDJbXVUdkBchAzL0FNWhnvnH1VRk4m5VNNQg+YlFWeUdEzd7yxHxGyLZUq4iBgJTYIY6efAq4HViNp22HvEieVwx38D02Os0MltdVR2QFxz5zUhcMAAAgAAAAIAAAACAAgAAgAAAAAAAAAAAIgYDMvQU1aGe+cfVVGTiblU01CD5iUVZ5R0TN3vLEfEbItkcqLRVVTAAAIAAAACAAAAAgAIAAIAAAAAAAAAAAAAiAgKXkSekytkdeEL5hKx9yHbmVYxTnwACtpyPIYSoKKn36Bz5zUhcMAAAgAAAAIAAAACAAgAAgAEAAAAAAAAAIgIC+zpfQojN0RQ0AwXD8FhQljskX2TPELmbE5u2tstKXGEcqLRVVTAAAIAAAACAAAAAgAIAAIABAAAAAAAAAAAA'
+    const signedPSBT = await btc.signPSBT(psbtTextProofOfReserves)
+
+    expect(signedPSBT).toBe(signedPsbtText)
+    expect(confirmActionSpy).toHaveBeenCalledTimes(1)
+    expect(confirmActionSpy).toHaveBeenCalledWith({
+      actionType: ActionType.SIGN_PSBT,
+      payload: expectedTrxInfo
+    },
+    expect.any(Function),
+    expect.any(Function))
+  })
   test('Should not sign PSBT when action confirmer is canceled', async () => {
-    const mnemonic = 'over whip setup elephant program cost absurd around myth twist discover raw'
     const cancelReason = 'User cancelled'
     const { btc } = await setupBTC({
-      mnemonic,
+      mnemonic: mnemonic1,
       cancelReason
     })
     try {
@@ -72,9 +114,8 @@ describe('Test BTC functionality', () => {
   })
 
   test('Should not sign PSBT when vault is locked', async () => {
-    const mnemonic = 'over whip setup elephant program cost absurd around myth twist discover raw'
     const { btc, vault } = await setupBTC({
-      mnemonic
+      mnemonic: mnemonic1
     })
     try {
       await vault.lock()
