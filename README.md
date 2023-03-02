@@ -58,7 +58,7 @@ During the VaultAuthProvider creation, the jwt token is verified, after the crea
 
 **Its important to note that the polkadot service class instance passed in to the hashed confidential docs will be configured with a VaultWallet when the user is logged in, that will enable this instance to be used to call extrinsics and sign on behalf of the user.**
 
-Once logged in the services provided by the [OwnedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L5) and [SharedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L7) objects can be accessed.  
+Once logged in the services provided by the [OwnedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/OwnedData.js#L5),[SharedData](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/015b59837eb8c0117fecb0c6323053d605a6f5fd/src/model/SharedData.js#L7) and [Group](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/3288b2938e2f824ce6df5052f941d2528d205cb2/src/model/Group.js#L9) objects can be accessed.  
 
 **OwnedData services**
 
@@ -102,4 +102,22 @@ let sharedData = await hp.sharedData().share({
 
 ```
 const ownedData = await hcd.sharedData().viewByCID(cid)
+```
+
+**Group services**
+
+* [createGroup](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/3288b2938e2f824ce6df5052f941d2528d205cb2/src/model/Group.js#L138): Creates a new group with the logged in user as the owner
+
+```
+const group = await hcd.group().createGroup('test1')
+```
+
+* [addGroupMember](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/3288b2938e2f824ce6df5052f941d2528d205cb2/src/model/Group.js#L168): Adds a member to the specified group, only owners and admins are able to add members
+
+```
+await hcd.group().addGroupMember({
+      groupAddress: group.group,
+      memberAddress,
+      role: GroupRole.MEMBER
+    })
 ```
