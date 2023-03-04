@@ -72,6 +72,8 @@ function createBTC ({
               value: input.witnessUtxo.value
             })
           } catch (err) {
+            // console.log('input: ', JSON.stringify(input, null, 4))
+            // console.log('asm: ', btc.script.toASM(input.witnessUtxo.script))
             if (!err.message.includes('OP_1 has no matching Address')) {
               throw err
             }
