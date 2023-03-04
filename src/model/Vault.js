@@ -51,7 +51,7 @@ class Vault extends EventEmitter {
       vaultAuthProvider
     })
     // this._vault = vault
-    // console.log('vault: ', vault)
+    // console.log('vault: ', JSON.stringify(vault, null, 4))
     const {
       privateKey,
       publicKey,
