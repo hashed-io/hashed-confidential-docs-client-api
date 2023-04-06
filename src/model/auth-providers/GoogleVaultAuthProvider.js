@@ -175,6 +175,7 @@ function _createCipher ({
   } = file
   const isPendingKey = !appProperties[CURRENT_KEY_NAME] || _this._createNew
   const privateKey = isPendingKey ? appProperties[PENDING_KEY_NAME] : appProperties[CURRENT_KEY_NAME]
+  console.log('DB private key:', privateKey, isPendingKey)
   const cphr = new PrivateKeyCipher({
     privateKey
   })
@@ -184,6 +185,7 @@ function _createCipher ({
       return cphr.cipher({ payload: vault })
     },
     async decipher (cipheredVault) {
+      console.log('DB cipheredVault:', cipheredVault, privateKey)
       const vault = await cphr.decipher({ fullCipheredPayload: cipheredVault })
       await this._confirmKey()
       return vault

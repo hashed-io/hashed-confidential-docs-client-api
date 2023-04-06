@@ -321,9 +321,11 @@ async function _getVault ({
   vaultAuthProvider
 }) {
   const userId = _generateUserId(vaultAuthProvider)
+  console.log('DB userId: ', userId)
   const vaultDetails = await _this._findVault(userId)
   let vault = null
   let signer = null
+  console.log('DB vaultDetails:', JSON.stringify(vaultDetails, null, 4))
   if (vaultDetails) {
     vault = await _this._decipherVault(vaultDetails, vaultAuthProvider)
   }
