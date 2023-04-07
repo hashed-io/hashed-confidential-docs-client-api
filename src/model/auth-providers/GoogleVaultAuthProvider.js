@@ -92,17 +92,21 @@ async function createGoogleVaultAuthProvider ({
   googleDrive,
   createNew = false
 }) {
+  console.log('DB authName: ', authName)
+  console.log('DB jwt: ', jwt)
   const decodedJWT = await BaseJWTVaultAuthProvider.verifyJWT({
     authName,
     jwt,
     faucetServerUrl
   })
-
+  console.log('DB decoded jwt: ', JSON.stringify(decodedJWT, null, 4))
   const metadataFile = await _getMetadataFile({
     createNew,
     googleDrive,
     email: decodedJWT.email
   })
+  console.log('DB metadata file: ', JSON.stringify(metadataFile, null, 4))
+  console.log('Create new: ', createNew)
 
   return new GoogleVaultAuthProvider({
     authName,
