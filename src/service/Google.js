@@ -17,6 +17,7 @@ class Google {
     scope,
     email
   }) {
+    console.log('In google init: ', email, scope)
     this._email = email
     await new Promise((resolve, reject) => {
       this._gapi.load('client', { callback: resolve, onerror: reject })
@@ -39,6 +40,7 @@ class Google {
           prompt: '',
           scope
         })
+        console.log('In google init token client: ', process.env.GOOGLE_CLIENT_ID, scope)
         resolve(tokenClient)
       } catch (err) {
         reject(err)
@@ -63,6 +65,7 @@ class Google {
             console.log('gapi.client access token: ', resp)
             resolve(resp)
           }
+          console.log('Requesting access token for: ', this._email)
           this._tokenClient.requestAccessToken({
             hint: this._email
           })
@@ -78,7 +81,9 @@ class Google {
 
   async request (client, method, params) {
     try {
+      console.log('In google request: ', client, method, JSON.stringify(params, null, 4))
       const { result } = await this._getClientFromStr(client)[method](params)
+      console.log('In google request result: ', JSON.stringify(result, null, 4))
       return result
     } catch (err) {
       try {

@@ -4,6 +4,7 @@ class GoogleDrive {
   }
 
   async init (email) {
+    console.log('In google drive init: ', email)
     await this._google.init({
       email,
       scope: 'https://www.googleapis.com/auth/drive.appdata'
@@ -42,6 +43,7 @@ class GoogleDrive {
   }
 
   async request (method, params) {
+    console.log('In google drive request: ', method, JSON.stringify(params, null, 4))
     return this._google.request('drive.files', method, params)
   }
 }
