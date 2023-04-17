@@ -22,8 +22,10 @@ class HashedConfidentialDocs {
     ipfsAuthHeader,
     polkadot,
     faucet,
-    btcUseTestnet = false
+    btcUseTestnet = false,
+    actionConfirmer = null
   }) {
+    actionConfirmer = actionConfirmer || new ModalActionConfirmer()
     this._ipfs = new IPFS({
       url: ipfsURL,
       authHeader: ipfsAuthHeader
@@ -35,7 +37,7 @@ class HashedConfidentialDocs {
       confidentialDocsApi: this._confidentialDocsApi,
       ipfs: this._ipfs,
       faucet,
-      actionConfirmer: new ModalActionConfirmer(),
+      actionConfirmer,
       btcUseTestnet
     })
     this._group = new Group({
