@@ -7,6 +7,7 @@ class Google {
     this._clientId = clientId
     this._tokenClient = null
     this._email = null
+    this._haveRequestedToken = false
   }
 
   client () {
@@ -50,9 +51,10 @@ class Google {
 
   async _requestToken (err) {
     if (
-      (err.result.error.code === 401 || err.result.error.code === 403)
+      (!err || err.result.error.code === 401 || err.result.error.code === 403)
       // && (err.result.error.status === 'PERMISSION_DENIED')
     ) {
+      this._haveRequestedToken = true
       // The access token is missing, invalid, or expired, prompt for user consent to obtain one.
       await new Promise((resolve, reject) => {
         try {
@@ -81,6 +83,9 @@ class Google {
 
   async request (client, method, params) {
     try {
+      if (!this._haveRequestedToken) {
+        await this._requestToken()
+      }
       console.log('In google request: ', client, method, JSON.stringify(params, null, 4))
       const { result } = await this._getClientFromStr(client)[method](params)
       console.log('In google request result: ', JSON.stringify(result, null, 4))
