@@ -241,19 +241,13 @@ class Vault extends EventEmitter {
       const signature = await this._polkadot.sign({
         payload: jwt
       })
-      try {
-        await this._faucet.send({
-          authName,
-          address: this.getAddress(),
-          jwt,
-          signature
-        })
-      } catch (err) {
-        const msg = err.message || err
-        if (!msg.includes('Tokens have already been distributed to user with id')) {
-          throw err
-        }
-      }
+
+      await this._faucet.send({
+        authName,
+        address: this.getAddress(),
+        jwt,
+        signature
+      })
     }
 
     if (requiresPatching) {
