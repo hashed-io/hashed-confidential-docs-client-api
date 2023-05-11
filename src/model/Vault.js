@@ -242,12 +242,20 @@ class Vault extends EventEmitter {
         payload: jwt
       })
 
-      await this._faucet.send({
-        authName,
-        address: this.getAddress(),
-        jwt,
-        signature
-      })
+      try {
+        await this._faucet.send({
+          authName,
+          address: this.getAddress(),
+          jwt,
+          signature
+        })
+      } catch (err) {
+        const msg = err.message || err
+        console.log(`Error fauceting funds: ${msg}`)
+        if (!msg.includes('Tokens have already been distributed to user with id')) {
+          throw err
+        }
+      }
     }
 
     if (requiresPatching) {
