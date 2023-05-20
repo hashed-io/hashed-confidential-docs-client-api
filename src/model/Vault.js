@@ -29,6 +29,7 @@ class Vault extends EventEmitter {
     this._docCipher = null
     this._btc = null
     this._actionConfirmer = actionConfirmer
+    this._exporterFn = null
   }
 
   setDocCipher (docCipher) {
@@ -50,6 +51,7 @@ class Vault extends EventEmitter {
       _this: this,
       vaultAuthProvider
     })
+    this._exporterFn = _createExporterFn(vault)
     // this._vault = vault
     // console.log('vault: ', JSON.stringify(vault, null, 4))
     const {
@@ -70,6 +72,18 @@ class Vault extends EventEmitter {
         network: this._btcUseTestnet ? btcjs.networks.testnet : btcjs.networks.bitcoin
       })
     })
+  }
+
+  /**
+   * Exports the vault secret data
+   *
+   * @param {Object} exporter a subclass of the BaseExporter class @see exporter/BaseExporter
+   *
+   * @throws error if the vault is locked
+   */
+  async exportVault (exporter) {
+    this.assertIsUnlocked()
+    return this._exporterFn(exporter)
   }
 
   /**
@@ -121,6 +135,7 @@ class Vault extends EventEmitter {
     // this._vault = null
     this._wallet = null
     this._btc = null
+    this._exporterFn = null
     this.emit('lock')
     // localStorage.removeItem(LocalStorageKey.VAULT_CONTEXT)
   }
@@ -349,6 +364,12 @@ async function _getVault ({
     userId,
     vault,
     signer
+  }
+}
+
+function _createExporterFn (vault) {
+  return async function (exporter) {
+    return exporter.export(vault)
   }
 }
 

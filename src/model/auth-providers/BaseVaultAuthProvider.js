@@ -3,7 +3,7 @@ class BaseVaultAuthProvider {
   constructor ({
     authName,
     userId,
-    keyExporter
+    keyExporter = null
   }) {
     if (!authName) {
       throw new Error('authName parameter is required')

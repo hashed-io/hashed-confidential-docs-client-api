@@ -37,17 +37,20 @@ class BaseJWTVaultAuthProvider extends BaseVaultAuthProvider {
    * @param {String} authName the name to identify this auth channel
    * @param {String} jwt the JSON Web Token
    * @param {Object} decodedJWT the decodedJWT
+   * @param {Object} [keyExporter] a subclass of the BaseExporter class @see exporter/BaseExporter
    *
    * @return {Object}
    */
   constructor ({
     authName,
     jwt,
-    decodedJWT
+    decodedJWT,
+    keyExporter = null
   }) {
     super({
       authName,
-      userId: decodedJWT.sub
+      userId: decodedJWT.sub,
+      keyExporter
     })
     this.jwt = jwt
     this.decodedJWT = decodedJWT

@@ -18,7 +18,7 @@ class GoogleVaultAuthProvider extends BaseJWTVaultAuthProvider {
    * @param {Object} metadataFile the metadata file stored in the users drive
    * @param {boolean} createNew should be used when there is an existing key that wants to be updated
    * @param {Object} googleDrive instance of the google drive service class @see service/GoogleDrive
-   *
+   * @param {Object} [keyExporter] a subclass of the BaseExporter class @see exporter/BaseExporter
    * @return {Object}
    */
   constructor ({
@@ -27,12 +27,14 @@ class GoogleVaultAuthProvider extends BaseJWTVaultAuthProvider {
     decodedJWT,
     metadataFile,
     createNew = false,
-    googleDrive
+    googleDrive,
+    keyExporter
   }) {
     super({
       authName,
       jwt,
-      decodedJWT
+      decodedJWT,
+      keyExporter
     })
     this._createNew = createNew
     // this._drive = new GoogleDrive(new Google({ gapi, clientId: googleClientId }))
@@ -82,6 +84,7 @@ class GoogleVaultAuthProvider extends BaseJWTVaultAuthProvider {
    * @param {String} faucetServerUrl the url for the hashed faucet server
    * @param {boolean} createNew should be used when there is an existing key that wants to be updated
    * @param {Object} googleDrive instance of the google drive service class @see service/GoogleDrive
+   * @param {Object} [keyExporter] a subclass of the BaseExporter class @see exporter/BaseExporter
    *
    * @return {GoogleVaultAuthProvider}
    */
@@ -90,7 +93,8 @@ async function createGoogleVaultAuthProvider ({
   jwt,
   faucetServerUrl,
   googleDrive,
-  createNew = false
+  createNew = false,
+  keyExporter = null
 }) {
   const decodedJWT = await BaseJWTVaultAuthProvider.verifyJWT({
     authName,
@@ -110,7 +114,8 @@ async function createGoogleVaultAuthProvider ({
     decodedJWT,
     metadataFile,
     googleDrive,
-    createNew
+    createNew,
+    keyExporter
   })
 }
 

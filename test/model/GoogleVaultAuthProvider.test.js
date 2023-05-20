@@ -3,6 +3,7 @@
 jest.setTimeout(20000)
 
 const { createGoogleVaultAuthProvider, BaseJWTVaultAuthProvider } = require('../../src/model/auth-providers')
+const { RememberExporter } = require('../../src/model/exporter')
 const { assertProviderInit, assertVerifyJWTCall } = require('../support/assertions')
 const Util = require('../support/Util')
 
@@ -168,6 +169,42 @@ describe('Test init/onVaultStored', () => {
         currentKey: key2
       }
     })
+  })
+
+  test('export should work', async () => {
+    googleDrive.getFileByName.mockResolvedValueOnce({
+      id: 1,
+      appProperties: {
+        currentKey: key1,
+        pendingKey: null
+      }
+    })
+    const providerDetails = getProviderDetails(1)
+    const exporter = new RememberExporter()
+    providerDetails.keyExporter = exporter
+    const provider = await createGoogleVaultAuthProvider(providerDetails)
+    await provider.onVaultStored()
+    await provider.exportKey()
+    expect(exporter.payload).toBe(JSON.stringify(key1))
+  })
+
+  test('export should fail when no exporter is provided', async () => {
+    expect.assertions(1)
+    googleDrive.getFileByName.mockResolvedValueOnce({
+      id: 1,
+      appProperties: {
+        currentKey: key1,
+        pendingKey: null
+      }
+    })
+    const providerDetails = getProviderDetails(1)
+    const provider = await createGoogleVaultAuthProvider(providerDetails)
+    await provider.onVaultStored()
+    try {
+      await provider.exportKey()
+    } catch (err) {
+      expect(err.message).toContain('A key exporter must be provided')
+    }
   })
 })
 

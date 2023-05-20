@@ -7,6 +7,7 @@ global.File = class {}
 const { ActionType } = require('../../src/const')
 const { LocalAccountFaucet } = require('../../src/model/faucet')
 const { Vault, DocCipher, Group } = require('../../src/model')
+const { RememberExporter } = require('../../src/model/exporter')
 const { PredefinedActionConfirmer } = require('../../src/model/action-confirmer')
 const { BalancesApi, ConfidentialDocsApi, Polkadot } = require('../../src/service')
 const Util = require('../support/Util')
@@ -224,6 +225,41 @@ describe('Test update VaultAuthProvider', () => {
       await vault.updateVaultAuthProvider(authProvider, newAuthProvider)
     } catch (err) {
       expect(err.message).toContain('The user does not have a vault')
+    }
+  })
+})
+
+describe('Test export vault', () => {
+  test('vault export works', async () => {
+    const { authProvider } = await util.getPasswordVaultAuthProvider(1)
+    expect(vault.isUnlocked()).toBe(false)
+    expect(await vault.hasVault(authProvider)).toBe(false)
+
+    await vault.unlock(authProvider)
+    expect(vault.isUnlocked()).toBe(true)
+    expect(await vault.hasVault(authProvider)).toBe(true)
+    const exporter1 = new RememberExporter()
+    await vault.exportVault(exporter1)
+    // console.log('vault: ', exporter1.payload)
+    const vaultData = JSON.parse(exporter1.payload)
+    expect(vaultData.mnemonic).toBeDefined()
+    expect(vaultData.btcMnemonic).toBeDefined()
+    expect(vaultData.privateKey).toBeDefined()
+    expect(vaultData.publicKey).toBeDefined()
+    await vault.unlock(authProvider)
+    expect(vault.isUnlocked()).toBe(true)
+    const exporter2 = new RememberExporter()
+    await vault.exportVault(exporter2)
+    expect(exporter2.payload).toBe(exporter1.payload)
+  })
+
+  test('vault export should fail for locked vault', async () => {
+    expect.assertions(2)
+    expect(vault.isUnlocked()).toBe(false)
+    try {
+      await vault.exportVault(new RememberExporter())
+    } catch (err) {
+      expect(err.message).toContain('The vault is locked')
     }
   })
 })
