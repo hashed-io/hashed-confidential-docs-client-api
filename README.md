@@ -121,3 +121,14 @@ await hcd.group().addGroupMember({
       role: GroupRole.MEMBER
     })
 ```
+
+
+**Export Vault**
+
+* [exportVault](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/479e97c487a6656dce21e160508b1fbdc17afc20/src/model/Vault.js#L84): Exports vault secret data
+* [BrowserDownloadExporter](https://github.com/hashed-io/hashed-confidential-docs-client-api/blob/479e97c487a6656dce21e160508b1fbdc17afc20/src/model/exporter/BrowserDownloadExporter.js#L4) Exports payload as a file download in the browser
+
+```
+const exporter = BrowserDownloadExporter()
+await hcd.vault().exportVault(exporter)
+```
