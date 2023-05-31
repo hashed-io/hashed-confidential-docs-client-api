@@ -231,6 +231,7 @@ class Vault extends EventEmitter {
 
     // console.log('publicKey: ', publicKey)
     let signer = vaultAuthProvider.getSigner()
+    const isExternalSigner = !!signer
     let shouldFaucetFunds = false
     if (!signer) {
       if (!vault.mnemonic) {
@@ -247,7 +248,7 @@ class Vault extends EventEmitter {
       vault.btcMnemonic = bip39.generateMnemonic()
       requiresPatching = true
     }
-    _configureWallet(this, signer)
+    _configureWallet({ _this: this, signer, keyring: _keyring, isExternalSigner })
     if (shouldFaucetFunds) {
       const {
         jwt,
@@ -375,15 +376,19 @@ function _createExporterFn (vault) {
 
 function _createWallet ({
   vault,
-  signer
+  signer,
+  keyring,
+  isExternalSigner
 }) {
   return new VaultWallet({
     vault,
-    signer
+    signer,
+    keyring,
+    isExternalSigner
   })
 }
 
-function _configureWallet (_this, signer) {
-  _this._wallet = _createWallet({ vault: _this, signer })
+function _configureWallet ({ _this, signer, keyring, isExternalSigner }) {
+  _this._wallet = _createWallet({ vault: _this, signer, keyring, isExternalSigner })
   _this._polkadot.setWallet(_this._wallet)
 }
