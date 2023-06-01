@@ -3,10 +3,11 @@ const { BalancesApi, Polkadot, Google, GoogleDrive } = require('./service')
 const { BaseActionConfirmer, ModalActionConfirmer, PredefinedActionConfirmer } = require('./model/action-confirmer')
 const { BaseFaucet, LocalAccountFaucet, HashedFaucet } = require('./model/faucet')
 const { BrowserDownloadExporter } = require('./model/exporter')
-const { createGoogleVaultAuthProvider, createPasswordVaultAuthProvider } = require('./model/auth-providers')
+const { createGoogleVaultAuthProvider, createPasswordVaultAuthProvider, BaseJWTVaultAuthProvider } = require('./model/auth-providers')
 
 module.exports = {
   BaseActionConfirmer,
+  BaseJWTVaultAuthProvider,
   ModalActionConfirmer,
   PredefinedActionConfirmer,
   HashedConfidentialDocs,
